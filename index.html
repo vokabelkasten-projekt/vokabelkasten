@@ -330,6 +330,30 @@ label.feld > span { font-size: .75rem; font-weight: 600; color: var(--tinte-2); 
 .tabellen-huelle { overflow-x: auto; }
 
 .hinweis { font-size: .8125rem; color: var(--tinte-2); line-height: 1.6; }
+code {
+  font-family: var(--schrift-zahl); font-size: .85em;
+  background: var(--karte-2); border: 1px solid var(--linie);
+  border-radius: 4px; padding: 1px 5px;
+}
+
+/* ------------------------ Prüftabelle für Importe ----------------------- */
+.pruefzeile {
+  display: grid; grid-template-columns: 26px 1fr 1fr auto; gap: 8px;
+  align-items: center; background: var(--karte); padding: 7px 10px;
+  border-top: 1px solid var(--linie);
+}
+.pruefzeile input[type="text"] { padding: 6px 9px; font-size: .9375rem; }
+.pruefzeile input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--tinte); }
+.pruefzeile.dublette { background: var(--karte-2); }
+.pruefzeile .warnung { font-family: var(--schrift-zahl); font-size: .625rem; color: var(--fast); white-space: nowrap; }
+.pruefkopf {
+  display: grid; grid-template-columns: 26px 1fr 1fr auto; gap: 8px;
+  padding: 0 10px 6px; font-family: var(--schrift-zahl); font-size: .625rem;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--tinte-3);
+}
+.pruefliste { border: 1px solid var(--linie); border-radius: 10px; overflow: hidden; }
+.pruefliste .pruefzeile:first-child { border-top: none; }
+.fotovorschau { max-height: 260px; border-radius: 10px; border: 1px solid var(--linie); display: block; }
 .leer-zustand { text-align: center; padding: 40px 20px; color: var(--tinte-2); }
 .leer-zustand .gross { font-size: 2.4rem; margin-bottom: 8px; }
 
@@ -436,6 +460,40 @@ label.feld > span { font-size: .75rem; font-weight: 600; color: var(--tinte-2); 
           <button class="tat" id="knopf-anlegen">Vokabel aufnehmen</button>
           <span class="hinweis" id="anlege-hinweis"></span>
         </div>
+      </div>
+
+      <!-- ------------- Aus dem Buch übernehmen: Foto und Liste ------------ -->
+      <div class="tafel stapel">
+        <div>
+          <h2>Aus dem Buch übernehmen</h2>
+          <p class="hinweis">In zwei Schritten. <strong>Erst</strong> die Buchseite fotografieren und das Foto verschicken – gelesen wird es zu Hause, wo eine KI daraus Wortpaare macht. <strong>Dann</strong> die zurückgeschickte Liste hier einfügen, durchsehen, berichtigen und übernehmen. Die Kontrolle liegt bei dir: Was du nicht abhakst, landet nicht im Kasten.</p>
+        </div>
+
+        <div class="reihe">
+          <button class="tat leise" id="knopf-foto">📷 Buchseite fotografieren</button>
+          <input type="file" id="foto-datei" accept="image/*" capture="environment" hidden>
+          <span class="hinweis" id="foto-hinweis"></span>
+        </div>
+        <div id="foto-bereich"></div>
+
+        <div>
+          <h3>Liste einfügen</h3>
+          <p class="hinweis">Eine Zeile je Vokabel: <code>fremd = deutsch</code>. Ein Beispielsatz lässt sich mit <code>|</code> anhängen. Zeilen wie <code>sprache: en</code> gelten für alles, was darunter steht.</p>
+        </div>
+        <textarea id="liste-text" rows="6" spellcheck="false" placeholder="sprache: en
+buch: Green Line
+lektion: 3
+wortfeld: Umwelt &amp; Klima
+---
+sustainable = nachhaltig | A sustainable lifestyle uses fewer resources.
+to tackle = angehen, in Angriff nehmen"></textarea>
+        <div class="reihe">
+          <button class="tat" id="knopf-liste-pruefen">Liste prüfen</button>
+          <button class="tat leise" id="knopf-liste-datei">Aus Datei laden</button>
+          <input type="file" id="liste-datei" accept=".txt,.md,.csv,text/plain" hidden>
+          <span class="hinweis" id="liste-hinweis"></span>
+        </div>
+        <div id="liste-vorschau"></div>
       </div>
 
       <div class="stapel">
@@ -1886,6 +1944,226 @@ function zeichneVokabeln() {
     });
   });
 }
+
+/* =========================================================================
+   AUS DEM BUCH ÜBERNEHMEN: FOTO UND LISTE
+
+   Der Weg ist bewusst zweiteilig und sichtbar:
+
+     Foto machen  ->  verschicken  ->  zu Hause liest eine KI die Seite
+                                       und schickt eine Liste zurück
+     Liste einfügen -> PRÜFEN UND BERICHTIGEN -> übernehmen
+
+   Warum nicht alles automatisch? Weil eine falsch erkannte Vokabel schlimmer
+   ist als gar keine: Man lernt sie dann wochenlang falsch. Deshalb steht
+   zwischen Erkennung und Karteikasten immer ein Mensch, der zusieht.
+
+   Das Listenformat ist mit Absicht schlicht, damit man es auch von Hand
+   tippen oder in jedem Texteditor berichtigen kann:
+
+       sprache: en            <- gilt fuer alles Folgende
+       buch: Green Line
+       lektion: 3
+       wortfeld: Umwelt & Klima
+       ---
+       sustainable = nachhaltig | A sustainable lifestyle uses fewer resources.
+       to tackle = angehen, in Angriff nehmen
+   ========================================================================= */
+
+const KOPFFELDER = ['sprache', 'buch', 'lektion', 'wortfeld'];
+
+function leseListe(text) {
+  const kopf = { sprache: daten.sprachen[0], buch: '', lektion: '', wortfeld: '' };
+  const eintraege = [];
+  const unverstanden = [];
+
+  String(text).split(/\r?\n/).forEach(function (roh, i) {
+    const zeile = roh.trim();
+    if (!zeile || zeile.charAt(0) === '#' || /^-{3,}$/.test(zeile)) return;
+
+    const kopfzeile = zeile.match(/^([A-Za-zä]+)\s*:\s*(.*)$/);
+    if (kopfzeile && KOPFFELDER.indexOf(kopfzeile[1].toLowerCase()) >= 0) {
+      const feld = kopfzeile[1].toLowerCase();
+      const wert = kopfzeile[2].trim();
+      kopf[feld] = (feld === 'sprache') ? wert.toLowerCase() : wert;
+      return;
+    }
+
+    /* Trenner ist "=", ein angehängter Beispielsatz steht hinter "|". */
+    const teile = zeile.split('|');
+    const paar = teile[0].split('=');
+    if (paar.length < 2 || !paar[0].trim() || !paar.slice(1).join('=').trim()) {
+      unverstanden.push({ nr: i + 1, text: zeile });
+      return;
+    }
+    eintraege.push({
+      fremd: paar[0].trim(),
+      deutsch: paar.slice(1).join('=').trim(),
+      beispielsatz: (teile.slice(1).join('|') || '').trim(),
+      sprache: kopf.sprache,
+      buch: kopf.buch,
+      lektion: kopf.lektion,
+      wortfeld: kopf.wortfeld
+    });
+  });
+  return { eintraege: eintraege, unverstanden: unverstanden, kopf: kopf };
+}
+
+/* Kennen wir das Wort schon? Verglichen wird nachsichtig, damit "to tackle"
+   und "tackle" als dieselbe Vokabel erkannt werden. */
+function findeDublette(fremd, sprache) {
+  const n = normalisiere(fremd);
+  return daten.vokabeln.find(function (v) {
+    return v.sprache === sprache && normalisiere(v.fremd) === n;
+  }) || null;
+}
+
+let gelesen = null;
+
+function zeigeListenvorschau(text) {
+  const ergebnis = leseListe(text);
+  gelesen = ergebnis;
+  const ziel = el('liste-vorschau');
+
+  if (!ergebnis.eintraege.length) {
+    ziel.innerHTML = '<p class="hinweis">Keine brauchbare Zeile gefunden. Jede Vokabelzeile braucht ein Gleichheitszeichen: <code>fremd = deutsch</code>.</p>';
+    return;
+  }
+
+  const dubletten = ergebnis.eintraege.filter(function (e) { return findeDublette(e.fremd, e.sprache); }).length;
+  const sprachOk = daten.sprachen.indexOf(ergebnis.kopf.sprache) >= 0;
+
+  const zeilen = ergebnis.eintraege.map(function (e, i) {
+    const alt = findeDublette(e.fremd, e.sprache);
+    return '<div class="pruefzeile' + (alt ? ' dublette' : '') + '">' +
+      '<input type="checkbox" data-nr="' + i + '"' + (alt ? '' : ' checked') + ' aria-label="übernehmen">' +
+      '<input type="text" data-feld="fremd" data-nr="' + i + '" value="' + esc(e.fremd) + '">' +
+      '<input type="text" data-feld="deutsch" data-nr="' + i + '" value="' + esc(e.deutsch) + '">' +
+      '<span class="warnung">' + (alt ? 'kenne ich schon' : '') + '</span>' +
+    '</div>';
+  }).join('');
+
+  ziel.innerHTML =
+    '<div class="stapel" style="gap:12px;margin-top:4px">' +
+      '<div class="reihe">' +
+        '<span class="chip ' + ergebnis.kopf.sprache + '">' + esc(String(ergebnis.kopf.sprache).toUpperCase()) + '</span>' +
+        (ergebnis.kopf.buch ? '<span class="marke-klein">' + esc(ergebnis.kopf.buch) + (ergebnis.kopf.lektion ? ' ' + esc(ergebnis.kopf.lektion) : '') + '</span>' : '') +
+        (ergebnis.kopf.wortfeld ? '<span class="marke-klein">' + esc(ergebnis.kopf.wortfeld) + '</span>' : '') +
+        '<span class="hinweis">' + ergebnis.eintraege.length + ' Zeilen gelesen' +
+          (dubletten ? ', ' + dubletten + ' davon kenne ich schon' : '') +
+          (ergebnis.unverstanden.length ? ', ' + ergebnis.unverstanden.length + ' nicht verstanden' : '') +
+        '</span>' +
+      '</div>' +
+      (sprachOk ? '' :
+        '<p class="hinweis" style="color:var(--falsch)">Die Sprache »' + esc(ergebnis.kopf.sprache) +
+        '« gehört nicht zu diesem Konto. Schreib <code>sprache: ' + daten.sprachen.join('</code> oder <code>sprache: ') +
+        '</code> in die erste Zeile.</p>') +
+      (ergebnis.unverstanden.length
+        ? '<p class="hinweis">Diese Zeilen habe ich übersprungen: ' +
+          ergebnis.unverstanden.slice(0, 5).map(function (u) { return 'Zeile ' + u.nr; }).join(', ') +
+          (ergebnis.unverstanden.length > 5 ? ' und weitere' : '') + '.</p>'
+        : '') +
+      '<div>' +
+        '<div class="pruefkopf"><span></span><span>Fremdsprache</span><span>Deutsch</span><span></span></div>' +
+        '<div class="pruefliste">' + zeilen + '</div>' +
+      '</div>' +
+      '<div class="reihe">' +
+        '<button class="tat" id="knopf-uebernehmen"' + (sprachOk ? '' : ' disabled') + '>Ausgewählte übernehmen</button>' +
+        '<button class="tat leise" id="knopf-alle">Alle abhaken</button>' +
+        '<span class="hinweis" id="uebernahme-hinweis"></span>' +
+      '</div>' +
+    '</div>';
+
+  /* Berichtigungen wandern sofort in die gelesenen Daten zurück. */
+  ziel.querySelectorAll('input[data-feld]').forEach(function (feld) {
+    feld.addEventListener('input', function () {
+      gelesen.eintraege[Number(feld.dataset.nr)][feld.dataset.feld] = feld.value;
+    });
+  });
+
+  el('knopf-alle').addEventListener('click', function () {
+    const kaesten = ziel.querySelectorAll('input[type="checkbox"]');
+    const allesAn = Array.prototype.every.call(kaesten, function (k) { return k.checked; });
+    kaesten.forEach(function (k) { k.checked = !allesAn; });
+  });
+
+  el('knopf-uebernehmen').addEventListener('click', function () {
+    const gewaehlt = [];
+    ziel.querySelectorAll('input[type="checkbox"]').forEach(function (k) {
+      if (k.checked) gewaehlt.push(gelesen.eintraege[Number(k.dataset.nr)]);
+    });
+    if (!gewaehlt.length) { el('uebernahme-hinweis').textContent = 'Nichts abgehakt.'; return; }
+
+    gewaehlt.forEach(function (e) {
+      daten.vokabeln.push(neueVokabel(e.sprache, e.fremd, e.deutsch, {
+        beispielsatz: e.beispielsatz, wortfeld: e.wortfeld, lektion: e.lektion,
+        buch: e.buch || BUCH[e.sprache] || ''
+      }));
+    });
+    sichere();
+    el('liste-text').value = '';
+    ziel.innerHTML = '';
+    el('liste-hinweis').textContent = gewaehlt.length +
+      (gewaehlt.length === 1 ? ' Vokabel liegt jetzt in Fach 1.' : ' Vokabeln liegen jetzt in Fach 1.');
+    fuelleWortfeldfilter();
+    zeichneVokabeln();
+    zeichneKasten();
+  });
+}
+
+el('knopf-liste-pruefen').addEventListener('click', function () {
+  el('liste-hinweis').textContent = '';
+  zeigeListenvorschau(el('liste-text').value);
+});
+
+el('knopf-liste-datei').addEventListener('click', function () { el('liste-datei').click(); });
+
+el('liste-datei').addEventListener('change', function (ev) {
+  const datei = ev.target.files && ev.target.files[0];
+  if (!datei) return;
+  const leser = new FileReader();
+  leser.onload = function () {
+    el('liste-text').value = leser.result;
+    zeigeListenvorschau(leser.result);
+  };
+  leser.readAsText(datei);
+  ev.target.value = '';
+});
+
+/* ---- Das Foto ---------------------------------------------------------
+   Die App liest das Foto nicht selbst. Sie hilft nur dabei, es aufzunehmen
+   und zu sichern, damit es verschickt werden kann. */
+el('knopf-foto').addEventListener('click', function () { el('foto-datei').click(); });
+
+el('foto-datei').addEventListener('change', function (ev) {
+  const bild = ev.target.files && ev.target.files[0];
+  if (!bild) return;
+  const url = URL.createObjectURL(bild);
+  const endung = (bild.type === 'image/png') ? 'png' : (bild.type === 'image/webp' ? 'webp' : 'jpg');
+  const name = 'buchseite-' + kurzname(daten.anzeigename || daten.benutzer) + '-' +
+               heute() + '-' + String(Date.now()).slice(-4) + '.' + endung;
+
+  el('foto-bereich').innerHTML =
+    '<div class="stapel" style="gap:10px">' +
+      '<img class="fotovorschau" src="' + url + '" alt="Aufgenommene Buchseite">' +
+      '<div class="reihe">' +
+        '<button class="tat leise klein" id="knopf-foto-sichern">Foto sichern</button>' +
+        '<button class="tat leise klein" id="knopf-foto-weg">Verwerfen</button>' +
+        '<span class="hinweis">Lesbar? Wenn die Schrift verschwimmt, lieber noch einmal – näher dran und mit gutem Licht.</span>' +
+      '</div>' +
+    '</div>';
+
+  el('foto-hinweis').textContent = '';
+  el('knopf-foto-sichern').addEventListener('click', function () {
+    sichereDatei(name, bild, el('foto-hinweis'));
+  });
+  el('knopf-foto-weg').addEventListener('click', function () {
+    URL.revokeObjectURL(url);
+    el('foto-bereich').innerHTML = '';
+    el('foto-hinweis').textContent = '';
+  });
+  ev.target.value = '';
+});
 
 /* --------------------------- Lernplan für heute -------------------------
    Der Plan wird nicht erfunden, sondern abgeleitet: aus dem Karteikasten
