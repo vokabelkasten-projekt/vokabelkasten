@@ -1,0 +1,2295 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#171C1A">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Vokabelkasten">
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0; font: 14px system-ui, sans-serif; background: #fbfbfa; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body><title>Vokabelkasten</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+
+<style>
+/* =========================================================================
+   FARBEN UND SCHRIFTEN (Design-Tokens)
+   Alle Farben stehen einmal hier - unten werden sie nur über ihren Namen
+   benutzt. So lässt sich helles und dunkles Design an einer Stelle regeln.
+   ========================================================================= */
+:root {
+  color-scheme: light;
+  --papier:   #EFF1ED;
+  --karte:    #FFFFFF;
+  --karte-2:  #F7F8F5;
+  --linie:    #DBDFD8;
+  --linie-2:  #C4CAC0;
+  --tinte:    #171C1A;
+  --tinte-2:  #5B6560;
+  --tinte-3:  #8A938E;
+  --tinte-auf: #FFFFFF;
+  --sprache-en: #2a78d6;
+  --sprache-fr: #eb6834;
+  --sprache-it: #1baf7a;
+  --richtig:     #1a7f3c;
+  --richtig-bg:  #E4F2E8;
+  --falsch:      #C0362B;
+  --falsch-bg:   #FAE7E4;
+  --fast:        #9A6700;
+  --fast-bg:     #FBF1DC;
+  --fach-1: #C6CDC6;
+  --fach-2: #A6B0A7;
+  --fach-3: #7F8C82;
+  --fach-4: #5A6660;
+  --fach-5: #2E3A34;
+  --schatten: 0 1px 2px rgba(23,28,26,.06), 0 6px 20px rgba(23,28,26,.06);
+  --schrift-anzeige: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --schrift-text:    "Source Serif 4", Georgia, "Times New Roman", serif;
+  --schrift-zahl:    "JetBrains Mono", ui-monospace, "Consolas", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --papier:   #14181A;
+    --karte:    #1C2225;
+    --karte-2:  #232A2D;
+    --linie:    #2C3438;
+    --linie-2:  #3C464A;
+    --tinte:    #E6EBE7;
+    --tinte-2:  #9AA5A0;
+    --tinte-3:  #6E7A75;
+    --tinte-auf: #14181A;
+    --sprache-en: #3987e5;
+    --sprache-fr: #d95926;
+    --sprache-it: #199e70;
+    --richtig:    #4ade80;
+    --richtig-bg: #16301F;
+    --falsch:     #f87171;
+    --falsch-bg:  #331C1B;
+    --fast:       #e9b949;
+    --fast-bg:    #332914;
+    --fach-1: #3A443E;
+    --fach-2: #4E5A52;
+    --fach-3: #6B7A70;
+    --fach-4: #8C9B90;
+    --fach-5: #C3D0C6;
+    --schatten: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --papier:   #14181A;
+  --karte:    #1C2225;
+  --karte-2:  #232A2D;
+  --linie:    #2C3438;
+  --linie-2:  #3C464A;
+  --tinte:    #E6EBE7;
+  --tinte-2:  #9AA5A0;
+  --tinte-3:  #6E7A75;
+  --tinte-auf: #14181A;
+  --sprache-en: #3987e5;
+  --sprache-fr: #d95926;
+  --sprache-it: #199e70;
+  --richtig:    #4ade80;
+  --richtig-bg: #16301F;
+  --falsch:     #f87171;
+  --falsch-bg:  #331C1B;
+  --fast:       #e9b949;
+  --fast-bg:    #332914;
+  --fach-1: #3A443E;
+  --fach-2: #4E5A52;
+  --fach-3: #6B7A70;
+  --fach-4: #8C9B90;
+  --fach-5: #C3D0C6;
+  --schatten: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
+}
+
+/* ============================ GRUNDGERÜST ============================== */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--papier);
+  color: var(--tinte);
+  font-family: var(--schrift-anzeige);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+.huelle { max-width: 800px; margin: 0 auto; padding: 0 16px 96px; }
+
+h1, h2, h3 { font-weight: 700; text-wrap: balance; margin: 0; letter-spacing: -.015em; }
+h2 { font-size: 1.25rem; }
+h3 { font-size: 1rem; }
+p { margin: 0; }
+
+.mini {
+  font-family: var(--schrift-zahl);
+  font-size: .688rem; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--tinte-3);
+}
+.zahl { font-family: var(--schrift-zahl); font-variant-numeric: tabular-nums; }
+
+:focus-visible { outline: 2px solid var(--tinte); outline-offset: 2px; border-radius: 3px; }
+
+/* ------------------------------ Kopfzeile ------------------------------ */
+.kopf { display: flex; align-items: center; gap: 12px; padding: 18px 0 14px; }
+.kopf .marke { font-size: 1.02rem; font-weight: 700; letter-spacing: -.02em; display: flex; align-items: center; gap: 9px; }
+.kopf .marke::before {
+  content: ""; width: 15px; height: 19px;
+  border: 2px solid var(--tinte); border-top-width: 6px;
+  border-radius: 2px 2px 3px 3px; flex: none;
+}
+.kopf .abstand { flex: 1; }
+
+.benutzer-knopf {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--karte); border: 1px solid var(--linie);
+  border-radius: 999px; padding: 5px 12px 5px 6px;
+  font: inherit; font-weight: 600; font-size: .875rem;
+  color: var(--tinte); cursor: pointer;
+}
+.benutzer-knopf:hover { border-color: var(--linie-2); }
+.initial {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--tinte); color: var(--tinte-auf);
+  display: grid; place-items: center; font-size: .75rem; font-weight: 700; flex: none;
+}
+
+/* ------------------------------- Reiter -------------------------------- */
+.reiter { display: flex; gap: 2px; border-bottom: 1px solid var(--linie); margin-bottom: 22px; overflow-x: auto; scrollbar-width: none; }
+.reiter::-webkit-scrollbar { display: none; }
+.reiter button {
+  appearance: none; background: none; border: none;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  padding: 9px 12px; font: inherit; font-size: .875rem; font-weight: 600;
+  color: var(--tinte-2); cursor: pointer; white-space: nowrap;
+}
+.reiter button:hover { color: var(--tinte); }
+.reiter button[aria-selected="true"] { color: var(--tinte); border-bottom-color: var(--tinte); }
+.reiter .anzahl {
+  font-family: var(--schrift-zahl); font-size: .688rem;
+  background: var(--tinte); color: var(--tinte-auf);
+  border-radius: 999px; padding: 1px 6px; margin-left: 6px;
+}
+
+/* ------------------------------ Bausteine ------------------------------ */
+.tafel { background: var(--karte); border: 1px solid var(--linie); border-radius: 12px; padding: 20px; box-shadow: var(--schatten); }
+.stapel { display: flex; flex-direction: column; gap: 18px; }
+.reihe { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+button.tat {
+  appearance: none; font: inherit; font-weight: 600; font-size: .9375rem;
+  padding: 11px 18px; border-radius: 9px;
+  border: 1px solid var(--tinte); background: var(--tinte); color: var(--tinte-auf); cursor: pointer;
+}
+button.tat:hover { opacity: .87; }
+button.tat.leise { background: var(--karte); color: var(--tinte); border-color: var(--linie-2); }
+button.tat.leise:hover { background: var(--karte-2); opacity: 1; }
+button.tat:disabled { opacity: .4; cursor: not-allowed; }
+button.klein { padding: 7px 12px; font-size: .8125rem; border-radius: 7px; }
+
+input[type="text"], select, textarea {
+  font: inherit; font-family: var(--schrift-text); font-size: 1rem;
+  padding: 10px 12px; border: 1px solid var(--linie-2); border-radius: 8px;
+  background: var(--karte); color: var(--tinte); width: 100%;
+}
+select { font-family: var(--schrift-anzeige); font-size: .9375rem; }
+label.feld { display: flex; flex-direction: column; gap: 5px; flex: 1 1 150px; }
+label.feld > span { font-size: .75rem; font-weight: 600; color: var(--tinte-2); }
+
+.chip {
+  font-family: var(--schrift-zahl); font-size: .688rem; font-weight: 600;
+  letter-spacing: .06em; padding: 2px 7px; border-radius: 5px; color: #fff; flex: none;
+}
+:root[data-theme="dark"] .chip { color: #10161A; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .chip { color: #10161A; } }
+.chip.en { background: var(--sprache-en); }
+.chip.fr { background: var(--sprache-fr); }
+.chip.it { background: var(--sprache-it); }
+.marke-klein {
+  font-family: var(--schrift-zahl); font-size: .625rem; letter-spacing: .05em;
+  border: 1px solid var(--linie-2); color: var(--tinte-2);
+  border-radius: 4px; padding: 1px 5px; flex: none;
+}
+
+/* ========================= KARTEIKASTEN (5 Fächer) ===================== */
+.kasten { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 18px; }
+.fach {
+  border-radius: 4px 4px 7px 7px; padding: 6px 6px 8px; text-align: center;
+  border: 1px solid var(--linie); background: var(--karte); position: relative;
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.fach .balken { height: 5px; border-radius: 3px 3px 0 0; margin: -6px -6px 7px; }
+.fach:nth-child(1) .balken { background: var(--fach-1); }
+.fach:nth-child(2) .balken { background: var(--fach-2); }
+.fach:nth-child(3) .balken { background: var(--fach-3); }
+.fach:nth-child(4) .balken { background: var(--fach-4); }
+.fach:nth-child(5) .balken { background: var(--fach-5); }
+.fach .wert { font-family: var(--schrift-zahl); font-size: 1.05rem; font-weight: 600; display: block; line-height: 1.2; }
+.fach .name { font-size: .625rem; color: var(--tinte-3); font-family: var(--schrift-zahl); letter-spacing: .05em; }
+.fach.hervor { transform: translateY(-4px); box-shadow: 0 4px 0 -1px var(--tinte); }
+@media (prefers-reduced-motion: reduce) { .fach { transition: none; } .fach.hervor { transform: none; } }
+
+/* ----------------------------- Übungskarte ----------------------------- */
+.uebungskarte {
+  background: var(--karte); border: 1px solid var(--linie); border-radius: 12px;
+  box-shadow: var(--schatten); padding: 26px 22px 22px; position: relative; overflow: hidden;
+}
+.uebungskarte::before {
+  content: ""; position: absolute; inset: 0;
+  background: repeating-linear-gradient(to bottom, transparent 0 31px, var(--linie) 31px 32px);
+  opacity: .38; pointer-events: none;
+}
+.uebungskarte > * { position: relative; }
+
+.frage-kopf { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.frage-wort {
+  font-family: var(--schrift-text); font-size: 2rem; font-weight: 600;
+  line-height: 1.2; letter-spacing: -.01em; text-wrap: balance; margin-bottom: 4px;
+}
+.frage-hinweis { font-size: .8125rem; color: var(--tinte-2); margin-bottom: 18px; }
+
+.hoerknopf {
+  appearance: none; background: var(--karte-2); border: 1px solid var(--linie-2);
+  border-radius: 7px; width: 34px; height: 30px; cursor: pointer; color: var(--tinte);
+  display: grid; place-items: center; flex: none; padding: 0; font-size: .9rem;
+}
+.hoerknopf:hover { background: var(--linie); }
+.hoerknopf.laeuft { background: var(--falsch); border-color: var(--falsch); color: #fff; }
+
+.rueckmeldung { border-radius: 9px; padding: 13px 15px; margin-top: 16px; border: 1px solid transparent; }
+.rueckmeldung .zeile { display: flex; align-items: baseline; gap: 8px; font-weight: 600; font-size: .9375rem; }
+.rueckmeldung .loesung { font-family: var(--schrift-text); font-size: 1.25rem; margin-top: 5px; }
+.rueckmeldung .fussnote { font-size: .8125rem; color: var(--tinte-2); margin-top: 7px; }
+.rueckmeldung.ja { background: var(--richtig-bg); border-color: var(--richtig); }
+.rueckmeldung.ja .zeile { color: var(--richtig); }
+.rueckmeldung.nein { background: var(--falsch-bg); border-color: var(--falsch); }
+.rueckmeldung.nein .zeile { color: var(--falsch); }
+.rueckmeldung.fast { background: var(--fast-bg); border-color: var(--fast); }
+.rueckmeldung.fast .zeile { color: var(--fast); }
+
+.merkhilfe {
+  background: var(--karte-2); border: 1px dashed var(--linie-2); border-radius: 8px;
+  padding: 10px 12px; margin-top: 12px; font-family: var(--schrift-text); font-size: .9375rem;
+}
+.merkhilfe .kopf { font-family: var(--schrift-zahl); font-size: .625rem; letter-spacing: .09em; text-transform: uppercase; color: var(--tinte-3); margin-bottom: 4px; }
+.satz { font-family: var(--schrift-text); font-style: italic; color: var(--tinte-2); font-size: .9375rem; margin-top: 8px; }
+
+/* ---------------------------- Vokabelliste ----------------------------- */
+.liste { display: flex; flex-direction: column; gap: 1px; background: var(--linie); border: 1px solid var(--linie); border-radius: 10px; overflow: hidden; }
+.zeile-vokabel {
+  display: grid; grid-template-columns: auto 1fr 1fr auto auto auto; gap: 10px;
+  align-items: center; background: var(--karte); padding: 10px 12px; font-size: .9375rem;
+}
+.zeile-vokabel .fremd { font-family: var(--schrift-text); font-weight: 600; }
+.zeile-vokabel .deutsch { font-family: var(--schrift-text); color: var(--tinte-2); }
+.zeile-vokabel .fachpunkt {
+  width: 22px; height: 22px; border-radius: 5px; display: grid; place-items: center;
+  font-family: var(--schrift-zahl); font-size: .688rem; font-weight: 600; color: var(--karte);
+}
+.loeschen { appearance: none; background: none; border: none; cursor: pointer; color: var(--tinte-3); font-size: 1.05rem; line-height: 1; padding: 4px 6px; }
+.loeschen:hover { color: var(--falsch); }
+.flagge { font-size: .8rem; }
+
+/* ------------------------------ Statistik ------------------------------ */
+.kacheln { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.kachel { background: var(--karte); border: 1px solid var(--linie); border-radius: 10px; padding: 14px 15px; }
+.kachel .gross { font-family: var(--schrift-zahl); font-size: 1.9rem; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.kachel .unter { font-size: .75rem; color: var(--tinte-2); margin-top: 3px; }
+
+.diagramm { display: flex; align-items: flex-end; gap: 2px; height: 108px; margin-top: 6px; }
+.saeule { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
+.saeule .fuellung { background: var(--tinte-2); border-radius: 4px 4px 0 0; min-height: 2px; transition: background .12s; }
+.saeule:hover .fuellung { background: var(--tinte); }
+.saeule.leer .fuellung { background: var(--linie); }
+.achse { display: flex; gap: 2px; margin-top: 6px; }
+.achse span { flex: 1; text-align: center; font-family: var(--schrift-zahl); font-size: .625rem; color: var(--tinte-3); }
+
+.quote-zeile { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; padding: 6px 0; }
+.quote-bahn { background: var(--karte-2); border-radius: 4px; height: 14px; overflow: hidden; border: 1px solid var(--linie); }
+.quote-fuellung { height: 100%; border-radius: 3px; }
+
+.tabelle { width: 100%; border-collapse: collapse; font-size: .875rem; }
+.tabelle th { text-align: left; font-size: .688rem; text-transform: uppercase; letter-spacing: .08em; color: var(--tinte-3); font-family: var(--schrift-zahl); font-weight: 600; padding: 0 8px 7px 0; }
+.tabelle td { padding: 8px 8px 8px 0; border-top: 1px solid var(--linie); vertical-align: middle; }
+.tabelle td.r { text-align: right; font-family: var(--schrift-zahl); font-variant-numeric: tabular-nums; }
+.tabellen-huelle { overflow-x: auto; }
+
+.hinweis { font-size: .8125rem; color: var(--tinte-2); line-height: 1.6; }
+.leer-zustand { text-align: center; padding: 40px 20px; color: var(--tinte-2); }
+.leer-zustand .gross { font-size: 2.4rem; margin-bottom: 8px; }
+
+/* ------------------------------ Wochenziel ----------------------------- */
+.wochenziel { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.einheiten { display: flex; gap: 6px; }
+.einheit {
+  width: 42px; height: 42px; border-radius: 9px; border: 2px solid var(--linie-2);
+  display: grid; place-items: center; font-family: var(--schrift-zahl); font-size: .75rem;
+  color: var(--tinte-3); flex: none;
+}
+.einheit.voll { background: var(--tinte); border-color: var(--tinte); color: var(--tinte-auf); }
+.einheit.teil { border-color: var(--tinte); color: var(--tinte); }
+
+/* ------------------------------- Tagebuch ------------------------------ */
+.eintrag { border-left: 3px solid var(--linie-2); padding-left: 16px; }
+.eintrag .datum { font-family: var(--schrift-zahl); font-size: .688rem; letter-spacing: .08em; text-transform: uppercase; color: var(--tinte-3); }
+.eintrag .text { font-family: var(--schrift-text); font-size: 1.0625rem; line-height: 1.65; margin-top: 6px; max-width: 62ch; }
+.eintrag.ki { border-left-color: var(--tinte); }
+
+/* --------------------------- Startbildschirm --------------------------- */
+.start { text-align: center; padding: 46px 0 20px; }
+.start h1 { font-size: clamp(1.9rem, 7vw, 2.7rem); margin-bottom: 10px; }
+.start .unterzeile { color: var(--tinte-2); font-family: var(--schrift-text); font-size: 1.0625rem; max-width: 46ch; margin: 0 auto 30px; }
+.waehler { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.waehler button {
+  appearance: none; cursor: pointer; background: var(--karte); border: 1px solid var(--linie);
+  border-radius: 12px; padding: 22px 30px; font: inherit; color: var(--tinte);
+  box-shadow: var(--schatten); display: flex; flex-direction: column; align-items: center; gap: 9px; min-width: 160px;
+}
+.waehler button:hover { border-color: var(--tinte); }
+.waehler .initial { width: 44px; height: 44px; font-size: 1.15rem; }
+.waehler .nam { font-weight: 700; font-size: 1.0625rem; }
+.waehler .det { font-family: var(--schrift-zahl); font-size: .688rem; color: var(--tinte-3); }
+
+.werkzeugtipp {
+  position: fixed; background: var(--tinte); color: var(--tinte-auf);
+  font-size: .75rem; font-family: var(--schrift-zahl); padding: 5px 8px;
+  border-radius: 6px; pointer-events: none; z-index: 50; white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .zeile-vokabel { grid-template-columns: auto 1fr auto auto auto; }
+  .zeile-vokabel .deutsch { grid-column: 2 / -1; }
+  .frage-wort { font-size: 1.7rem; }
+}
+</style>
+
+<div class="huelle">
+
+  <!-- ======================= STARTBILDSCHIRM ======================= -->
+  <section id="s-start" class="start">
+    <h1>Vokabelkasten</h1>
+    <p class="unterzeile">Ein Karteikasten mit fünf Fächern. Was du kannst, wandert nach hinten und kommt seltener dran. Was hakt, kommt zurück nach vorn.</p>
+    <div class="waehler" id="waehler"></div>
+  </section>
+
+  <!-- ========================== ANWENDUNG ========================== -->
+  <div id="app" hidden>
+    <header class="kopf">
+      <div class="marke">Vokabelkasten</div>
+      <div class="abstand"></div>
+      <button class="benutzer-knopf" id="knopf-benutzer" title="Benutzer wechseln">
+        <span class="initial" id="benutzer-initial">F</span>
+        <span id="benutzer-name">Konto A</span>
+      </button>
+    </header>
+
+    <nav class="reiter" role="tablist">
+      <button role="tab" data-ansicht="ueben" aria-selected="true">Üben<span class="anzahl" id="anz-faellig">0</span></button>
+      <button role="tab" data-ansicht="vokabeln" aria-selected="false">Vokabeln</button>
+      <button role="tab" data-ansicht="tagebuch" aria-selected="false">Plan &amp; Tagebuch</button>
+      <button role="tab" data-ansicht="statistik" aria-selected="false">Statistik</button>
+      <button role="tab" data-ansicht="einstellungen" aria-selected="false">Einstellungen</button>
+    </nav>
+
+    <!-- ----------------------------- ÜBEN ---------------------------- -->
+    <section id="a-ueben">
+      <div class="reihe" id="uebungsart" style="margin-bottom:16px"></div>
+      <div class="kasten" id="kasten"></div>
+      <div id="uebungsbereich"></div>
+    </section>
+
+    <!-- --------------------------- VOKABELN -------------------------- -->
+    <section id="a-vokabeln" hidden class="stapel">
+      <div class="tafel stapel">
+        <h2>Neue Vokabel</h2>
+        <div class="reihe">
+          <label class="feld" style="flex:0 0 118px"><span>Sprache</span><select id="neu-sprache"></select></label>
+          <label class="feld"><span>Fremdsprache</span>
+            <span style="display:flex;gap:6px;align-items:stretch">
+              <input type="text" id="neu-fremd" placeholder="reluctant" autocomplete="off">
+              <button class="hoerknopf" id="knopf-neu-sprechen" style="width:40px;height:auto" title="Vokabel einsprechen" aria-label="Vokabel einsprechen">🎤</button>
+            </span>
+          </label>
+          <label class="feld"><span>Deutsch</span><input type="text" id="neu-deutsch" placeholder="widerwillig, zögernd" autocomplete="off"></label>
+        </div>
+        <div class="reihe">
+          <label class="feld"><span>Beispielsatz (freiwillig)</span><input type="text" id="neu-satz" placeholder="He was reluctant to admit his mistake." autocomplete="off"></label>
+          <label class="feld" style="flex:0 0 130px"><span>Wortfeld</span><input type="text" id="neu-wortfeld" placeholder="z. B. Gefühle" autocomplete="off"></label>
+          <label class="feld" style="flex:0 0 100px"><span>Lektion</span><input type="text" id="neu-lektion" placeholder="z. B. 3" autocomplete="off"></label>
+        </div>
+        <div class="reihe">
+          <button class="tat" id="knopf-anlegen">Vokabel aufnehmen</button>
+          <span class="hinweis" id="anlege-hinweis"></span>
+        </div>
+      </div>
+
+      <div class="stapel">
+        <div class="reihe">
+          <h2 style="flex:1">Kartei <span class="zahl" id="anz-vokabeln" style="color:var(--tinte-3);font-weight:400"></span></h2>
+          <select id="filter-sprache" style="width:auto"></select>
+          <select id="filter-wortfeld" style="width:auto"></select>
+        </div>
+        <div id="vokabelliste"></div>
+      </div>
+    </section>
+
+    <!-- --------------------------- TAGEBUCH -------------------------- -->
+    <section id="a-tagebuch" hidden class="stapel">
+      <div class="tafel stapel">
+        <div>
+          <h2>Heute dran</h2>
+          <p class="hinweis">Dein persönlicher Lernplan – nicht ausgedacht, sondern aus deinem Karteikasten und deinem Journal abgeleitet.</p>
+        </div>
+        <div id="heute-plan"></div>
+      </div>
+
+      <div class="tafel stapel">
+        <div>
+          <h2>Dein Wochenplan</h2>
+          <p class="hinweis">Keine festen Uhrzeiten – ein Wochenpensum. Wann du es einlöst, entscheidest du.</p>
+        </div>
+        <div class="wochenziel" id="wochenziel"></div>
+        <p class="hinweis" id="wochen-text"></p>
+      </div>
+
+      <div class="stapel">
+        <h2>Lerntagebuch</h2>
+        <div id="tagebuch"></div>
+      </div>
+    </section>
+
+    <!-- --------------------------- STATISTIK ------------------------- -->
+    <section id="a-statistik" hidden class="stapel">
+      <div class="kacheln" id="kacheln"></div>
+
+      <div class="tafel">
+        <h3>Übungen pro Tag</h3>
+        <p class="mini" style="margin-top:2px">Die letzten 14 Tage</p>
+        <div class="diagramm" id="diagramm-tage"></div>
+        <div class="achse" id="achse-tage"></div>
+      </div>
+
+      <div class="tafel">
+        <h3>Trefferquote je Sprache</h3>
+        <p class="mini" style="margin-top:2px">Anteil richtiger Antworten</p>
+        <div id="quoten" style="margin-top:10px"></div>
+      </div>
+
+      <div class="tafel">
+        <h3>Die zehn schwersten Vokabeln</h3>
+        <p class="mini" style="margin-top:2px">Nach Anzahl der Fehler</p>
+        <div class="tabellen-huelle" style="margin-top:10px"><table class="tabelle" id="tabelle-schwer"></table></div>
+        <p class="hinweis" id="schwer-hinweis" style="margin-top:12px"></p>
+      </div>
+
+      <div class="tafel">
+        <h3>Deine Widersprüche</h3>
+        <p class="mini" style="margin-top:2px">Wo du dem Programm widersprochen hast</p>
+        <div id="widersprueche" style="margin-top:10px"></div>
+      </div>
+    </section>
+
+    <!-- ------------------------- EINSTELLUNGEN ----------------------- -->
+    <section id="a-einstellungen" hidden class="stapel">
+      <div class="tafel stapel">
+        <div><h2>Ausgabe der Lösung</h2><p class="hinweis">Wie soll die richtige Antwort erscheinen?</p></div>
+        <div class="reihe" id="modus-wahl"></div>
+        <p class="hinweis" id="stimmen-hinweis"></p>
+      </div>
+
+      <div class="tafel stapel">
+        <div><h2>Abfragerichtung</h2><p class="hinweis">In welche Richtung wird gefragt?</p></div>
+        <div class="reihe" id="richtung-wahl"></div>
+      </div>
+
+      <div class="tafel stapel">
+        <div>
+          <h2>Aussprachekontrolle</h2>
+          <p class="hinweis">Drei Ausbaustufen. Stufe 1 arbeitet allein im Browser, Stufe 2 nimmt auf und wird zu Hause ausgewertet, Stufe 3 braucht einen kostenpflichtigen Bewertungsdienst.</p>
+        </div>
+        <div class="reihe" id="aussprache-wahl"></div>
+        <p class="hinweis" id="aussprache-hinweis"></p>
+      </div>
+
+      <div class="tafel stapel">
+        <div><h2>Wochenpensum</h2><p class="hinweis">Wie viel willst du dir pro Woche vornehmen?</p></div>
+        <div class="reihe">
+          <label class="feld" style="flex:0 0 130px"><span>Einheiten pro Woche</span><input type="text" id="ziel-einheiten" inputmode="numeric" autocomplete="off"></label>
+          <label class="feld" style="flex:0 0 150px"><span>Minuten je Einheit</span><input type="text" id="ziel-minuten" inputmode="numeric" autocomplete="off"></label>
+          <button class="tat leise" id="knopf-ziel">Übernehmen</button>
+        </div>
+      </div>
+
+      <div class="tafel stapel">
+        <div><h2>Dein Name auf diesem Gerät</h2><p class="hinweis">Nur hier gespeichert. Der Name steht nirgends im Programmtext und wird nirgendwohin übertragen.</p></div>
+        <div class="reihe">
+          <label class="feld" style="flex:0 0 210px"><span>Anzeigename</span><input type="text" id="anzeigename" autocomplete="off"></label>
+          <button class="tat leise" id="knopf-name">Übernehmen</button>
+        </div>
+      </div>
+
+      <div class="tafel stapel">
+        <div>
+          <h2>Daten sichern und übertragen</h2>
+          <p class="hinweis">Der Kasten liegt in diesem Browser. Zum Wechseln auf ein anderes Gerät – und für unsere gemeinsamen Auswertungen zu Hause – exportierst du ihn als Datei.</p>
+        </div>
+        <div class="reihe">
+          <button class="tat" id="knopf-export">Daten exportieren</button>
+          <button class="tat leise" id="knopf-import">Daten einlesen</button>
+          <input type="file" id="datei-import" accept=".json,application/json" hidden>
+        </div>
+        <p class="hinweis" id="daten-hinweis"></p>
+      </div>
+
+      <div class="tafel stapel">
+        <div>
+          <h2>Startvokabeln</h2>
+          <p class="hinweis">Ein Probelauf mit 40 Vokabeln je Sprache auf Oberstufenniveau, in acht Wortfelder gegliedert und mit Beispielsätzen. Sobald eure Buchvokabeln drin sind, könnt ihr sie entfernen.</p>
+        </div>
+        <div class="reihe">
+          <button class="tat leise" id="knopf-demo-weg">Startvokabeln entfernen</button>
+          <button class="tat leise" id="knopf-demo-her">Startvokabeln zurückholen</button>
+        </div>
+      </div>
+
+      <p class="hinweis" style="text-align:center">
+        Stufe 2 – Als Nächstes: Foto&nbsp;/&nbsp;OCR aus Green&nbsp;Line und Découvertes, Aussprachestufe 2 und 3, Kalender und E-Mail-Erinnerungen.
+      </p>
+    </section>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   ABSCHNITT 1: DATEN
+   Jeder Benutzer hat seinen eigenen Datenraum im Speicher des Browsers.
+   ========================================================================= */
+
+/* Diese Liste tauscht das Bauskript für die öffentliche Fassung aus. Den
+   angezeigten Namen setzt jeder auf seinem Gerät selbst - er bleibt dort und
+   steht nirgends im Programmtext. */
+const BENUTZER = [
+  { name: "Konto A", kuerzel: "A", sprachen: ["en", "it"] },
+  { name: "Konto B", kuerzel: "B", sprachen: ["en", "fr"] }
+];
+
+const SPRACHNAMEN = { en: "Englisch", fr: "Französisch", it: "Italienisch" };
+const VORLESE_CODE = { en: "en-GB", fr: "fr-FR", it: "it-IT" };
+/* Die Schulbücher. Für Italienisch steht das Buch noch nicht fest. */
+const BUCH = { en: "Green Line", fr: "Découvertes", it: "" };
+
+let benutzer = null;
+let daten = null;
+let aktuelleFrage = null;
+
+function schluessel(name) { return "vt." + kurzname(name) + ".v1"; }
+function kurzname(name) { return String(name).toLowerCase().replace(/[^a-z0-9]+/g, "-"); }
+
+function heute() { return new Date().toISOString().slice(0, 10); }
+
+function tagePlus(anzahl, ab) {
+  const d = ab ? new Date(ab + "T12:00:00") : new Date();
+  d.setDate(d.getDate() + anzahl);
+  return d.toISOString().slice(0, 10);
+}
+
+/* Wochen laufen von Montag bis Sonntag. */
+function wochenStart(datum) {
+  const d = new Date((datum || heute()) + "T12:00:00");
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d.toISOString().slice(0, 10);
+}
+
+function neueId() { return Math.random().toString(36).slice(2, 10); }
+
+function benutzerInfo(name) {
+  return BENUTZER.find(function (b) { return b.name === name; }) || BENUTZER[0];
+}
+
+function leererDatenraum(name) {
+  return {
+    version: 2,
+    benutzer: name,
+    anzeigename: name,
+    sprachen: benutzerInfo(name).sprachen.slice(),
+    einstellungen: {
+      ausgabemodus: "beides",
+      richtung: "gemischt",
+      aussprachestufe: 1,
+      wochenziel: { einheiten: 3, minuten: 20 }
+    },
+    vokabeln: startVokabeln(benutzerInfo(name).sprachen),
+    journal: [],
+    tagebuch: []          // erzählende Einträge - eigene und von der KI geschriebene
+  };
+}
+
+/* Ältere Datenstände sanft nachrüsten, statt sie wegzuwerfen. */
+function ruesteNach(d, name) {
+  d.version = 2;
+  d.benutzer = name;
+  if (!d.anzeigename) d.anzeigename = name;
+  if (!d.sprachen) d.sprachen = benutzerInfo(name).sprachen.slice();
+  if (!d.einstellungen) d.einstellungen = {};
+  const e = d.einstellungen;
+  if (!e.ausgabemodus) e.ausgabemodus = "beides";
+  if (!e.richtung) e.richtung = "gemischt";
+  if (!e.aussprachestufe) e.aussprachestufe = 1;
+  if (!e.wochenziel) e.wochenziel = { einheiten: 3, minuten: 20 };
+  if (!Array.isArray(d.vokabeln)) d.vokabeln = [];
+  if (!Array.isArray(d.journal)) d.journal = [];
+  if (!Array.isArray(d.tagebuch)) d.tagebuch = [];
+  d.vokabeln.forEach(function (v) {
+    if (v.buch === undefined) v.buch = BUCH[v.sprache] || "";
+    if (v.wortfeld === undefined) v.wortfeld = "";
+    if (v.beispielsatz === undefined) v.beispielsatz = "";
+    if (v.eselsbruecke === undefined) v.eselsbruecke = "";
+    if (!Array.isArray(v.eigeneSaetze)) v.eigeneSaetze = [];
+    if (v.umstritten === undefined) v.umstritten = false;
+  });
+  return d;
+}
+
+function lade(name) {
+  try {
+    const roh = localStorage.getItem(schluessel(name));
+    if (roh) return ruesteNach(JSON.parse(roh), name);
+  } catch (e) { /* kein Speicher verfügbar - dann eben frisch anfangen */ }
+  return leererDatenraum(name);
+}
+
+function sichere() {
+  if (!daten) return;
+  try { localStorage.setItem(schluessel(daten.benutzer), JSON.stringify(daten)); }
+  catch (e) { /* Speicher voll oder gesperrt - die Sitzung läuft trotzdem weiter */ }
+}
+
+function neueVokabel(sprache, fremd, deutsch, zusatz) {
+  const z = zusatz || {};
+  return {
+    id: neueId(),
+    sprache: sprache,
+    fremd: fremd,
+    deutsch: deutsch,
+    buch: z.buch !== undefined ? z.buch : (BUCH[sprache] || ""),
+    lektion: z.lektion || "",
+    wortfeld: z.wortfeld || "",
+    beispielsatz: z.beispielsatz || "",
+    eselsbruecke: z.eselsbruecke || "",
+    eigeneSaetze: [],
+    umstritten: false,
+    start: !!z.start,          // gehört zum Probelauf-Grundstock
+    fach: 1,
+    faelligAm: heute(),
+    statistik: { richtig: 0, falsch: 0, serie: 0 }
+  };
+}
+
+/* =========================================================================
+   ABSCHNITT 2: STARTVOKABELN (Probelauf)
+   40 Vokabeln je Sprache, Oberstufenniveau, acht Wortfelder zu je fünf
+   Wörtern - in allen drei Sprachen dieselben Wortfelder, damit sich später
+   Wortfeld-Einheiten sprachübergreifend bauen lassen.
+   Aufbau je Eintrag: [Fremdsprache, Deutsch, Beispielsatz, Eselsbrücke?]
+   ========================================================================= */
+const WORTFELDER = [
+  "Umwelt & Klima", "Politik & Gesellschaft", "Medien & Digitales", "Arbeit & Wirtschaft",
+  "Gefühle & Charakter", "Meinung & Argument", "Schule & Studium", "Recht & Konflikt"
+];
+
+const GRUNDSTOCK = {
+  en: [
+    ["sustainable", "nachhaltig", "A sustainable lifestyle uses fewer resources than we replace."],
+    ["to tackle", "angehen, in Angriff nehmen", "Governments must tackle climate change now."],
+    ["emissions", "Emissionen, Abgase", "The new law aims to cut emissions by half."],
+    ["scarce", "knapp, rar", "Fresh water is becoming scarce in many regions.", "Klingt wie »scared« – man bekommt Angst, wenn etwas knapp wird."],
+    ["to preserve", "bewahren, erhalten", "We must preserve these forests for future generations."],
+
+    ["to run for office", "für ein Amt kandidieren", "She decided to run for office at the age of 28."],
+    ["inequality", "Ungleichheit", "The gap between rich and poor is a form of inequality."],
+    ["citizen", "Bürger, Staatsbürger", "Every citizen has the right to vote."],
+    ["to campaign for", "sich einsetzen für", "Students campaigned for cheaper public transport."],
+    ["welfare", "Sozialleistungen, Wohlergehen", "The welfare system supports people without a job."],
+
+    ["biased", "voreingenommen, einseitig", "A biased report leaves out the other side of the story."],
+    ["to browse", "stöbern, im Netz surfen", "He browsed the news for half an hour."],
+    ["privacy", "Privatsphäre", "Many apps collect data without respecting your privacy."],
+    ["coverage", "Berichterstattung", "The election got huge coverage in every paper."],
+    ["misleading", "irreführend", "The headline was misleading; the article said something else."],
+
+    ["to apply for", "sich bewerben um", "She applied for an internship in London."],
+    ["income", "Einkommen", "Their income barely covers the rent."],
+    ["to be in charge of", "verantwortlich sein für", "He is in charge of the whole department."],
+    ["demanding", "anspruchsvoll, fordernd", "Nursing is a demanding job."],
+    ["to make a living", "seinen Lebensunterhalt verdienen", "It is hard to make a living as an artist."],
+
+    ["reluctant", "widerwillig, zögernd", "He was reluctant to admit his mistake.", "re-LUCK-tant: Wer kein »luck« hat, macht es nur widerwillig."],
+    ["self-confident", "selbstbewusst", "She sounded self-confident in the interview."],
+    ["to resent", "übelnehmen, grollen", "He resented being treated like a child."],
+    ["overwhelmed", "überwältigt, überfordert", "I felt overwhelmed by all the homework."],
+    ["stubborn", "stur, hartnäckig", "My little brother is incredibly stubborn.", "»stub« ist der Baumstumpf – ein Stumpf rührt sich nicht vom Fleck."],
+
+    ["to point out", "hinweisen auf, betonen", "She pointed out that the data was outdated."],
+    ["on the contrary", "im Gegenteil", "It is not boring; on the contrary, it is fascinating."],
+    ["to be convinced", "überzeugt sein", "I am convinced that this is the better solution."],
+    ["to admit", "zugeben, einräumen", "You have to admit that he has a point."],
+    ["reasonable", "vernünftig, angemessen", "That sounds like a reasonable compromise."],
+
+    ["to graduate", "den Abschluss machen", "He will graduate from university next summer."],
+    ["assignment", "Aufgabe, Hausarbeit", "The assignment is due on Friday."],
+    ["to keep up with", "Schritt halten mit", "It is hard to keep up with the reading list."],
+    ["deadline", "Abgabetermin", "I missed the deadline by two hours."],
+    ["to revise", "wiederholen, für eine Prüfung lernen", "She revised for the exam all weekend."],
+
+    ["to accuse somebody of", "jemanden beschuldigen", "They accused him of stealing the money."],
+    ["guilty", "schuldig", "The jury found her not guilty."],
+    ["evidence", "Beweis, Beweise", "There was no evidence against him."],
+    ["to settle a dispute", "einen Streit beilegen", "The two sides settled the dispute out of court."],
+    ["fair trial", "faires Verfahren", "Everyone has the right to a fair trial."]
+  ],
+  fr: [
+    ["durable", "nachhaltig", "Un mode de vie durable protège les ressources.", "»dauern« steckt drin – was dauert, ist nachhaltig."],
+    ["lutter contre", "bekämpfen", "Il faut lutter contre le réchauffement climatique."],
+    ["les déchets", "der Abfall, der Müll", "Nous trions les déchets depuis des années."],
+    ["le gaspillage", "die Verschwendung", "Le gaspillage alimentaire est un vrai problème."],
+    ["préserver", "bewahren, schützen", "Il faut préserver la forêt pour nos enfants."],
+
+    ["le citoyen", "der Bürger", "Chaque citoyen a le droit de voter."],
+    ["l'inégalité", "die Ungleichheit", "Les inégalités entre riches et pauvres augmentent."],
+    ["s'engager pour", "sich einsetzen für", "Elle s'engage pour les droits des femmes."],
+    ["le droit de vote", "das Wahlrecht", "Le droit de vote est un acquis important."],
+    ["la manifestation", "die Demonstration", "Des milliers de jeunes ont participé à la manifestation."],
+
+    ["la vie privée", "die Privatsphäre", "Les réseaux sociaux menacent la vie privée."],
+    ["le réseau social", "das soziale Netzwerk", "Il passe trop de temps sur les réseaux sociaux."],
+    ["trompeur", "irreführend", "Ce titre est trompeur.", "»tromper« heißt täuschen – ein trompeur führt in die Irre."],
+    ["l'actualité", "das aktuelle Geschehen, die Nachrichten", "Je suis l'actualité tous les matins."],
+    ["diffuser", "verbreiten, senden", "La chaîne a diffusé le reportage hier soir."],
+
+    ["postuler", "sich bewerben", "Elle a postulé pour un stage à Lyon."],
+    ["le salaire", "der Lohn, das Gehalt", "Son salaire ne suffit pas pour vivre à Paris."],
+    ["être responsable de", "verantwortlich sein für", "Il est responsable de toute l'équipe."],
+    ["exigeant", "anspruchsvoll", "C'est un métier exigeant mais passionnant."],
+    ["gagner sa vie", "seinen Lebensunterhalt verdienen", "Il gagne sa vie comme photographe."],
+
+    ["avoir du mal à", "Mühe haben zu", "J'ai du mal à me concentrer le soir."],
+    ["têtu", "stur", "Mon frère est vraiment têtu.", "Von »tête« (Kopf) – wer seinen Kopf durchsetzt, ist stur."],
+    ["se sentir dépassé", "sich überfordert fühlen", "Je me sens dépassé par tout ce travail."],
+    ["avouer", "gestehen, zugeben", "Il a fini par avouer son erreur."],
+    ["la confiance en soi", "das Selbstvertrauen", "Le sport lui a donné confiance en soi."],
+
+    ["souligner", "betonen, hervorheben", "Elle a souligné l'importance du problème.", "»sous-ligner« – etwas unterstreichen, also betonen."],
+    ["au contraire", "im Gegenteil", "Ce n'est pas ennuyeux, au contraire !"],
+    ["être convaincu", "überzeugt sein", "Je suis convaincu que c'est la bonne solution."],
+    ["reconnaître", "anerkennen, zugeben", "Il faut reconnaître qu'il a raison."],
+    ["raisonnable", "vernünftig", "C'est une proposition raisonnable."],
+
+    ["passer un examen", "eine Prüfung ablegen", "Elle passe son bac en juin.", "Achtung, falscher Freund: passer heißt ablegen, nicht bestehen."],
+    ["réviser", "wiederholen, lernen", "J'ai révisé tout le week-end."],
+    ["le devoir", "die Hausaufgabe, die Pflicht", "Je dois rendre ce devoir vendredi."],
+    ["réussir", "bestehen, schaffen", "Il a réussi son examen sans problème."],
+    ["suivre un cours", "einen Kurs besuchen", "Je suis un cours d'italien depuis septembre."],
+
+    ["accuser quelqu'un de", "jemanden beschuldigen", "On l'a accusé d'avoir menti."],
+    ["coupable", "schuldig", "Le tribunal l'a déclaré coupable.", "»coup« – wer den Schlag geführt hat, ist schuldig."],
+    ["la preuve", "der Beweis", "Il n'y avait aucune preuve contre elle."],
+    ["régler un conflit", "einen Konflikt lösen", "Ils ont réglé le conflit sans avocat."],
+    ["le procès", "der Prozess", "Le procès a duré trois semaines."]
+  ],
+  it: [
+    ["sostenibile", "nachhaltig", "Uno stile di vita sostenibile protegge le risorse.", "»sostenere« heißt tragen – was sich selbst tragen kann, ist nachhaltig."],
+    ["lottare contro", "bekämpfen", "Dobbiamo lottare contro il cambiamento climatico."],
+    ["i rifiuti", "der Abfall, der Müll", "In questa città i rifiuti vengono riciclati."],
+    ["lo spreco", "die Verschwendung", "Lo spreco di cibo è un problema enorme."],
+    ["preservare", "bewahren", "Bisogna preservare il bosco per i nostri figli."],
+
+    ["il cittadino", "der Bürger", "Ogni cittadino ha il diritto di votare.", "Von »città« (Stadt) – der Städter ist der Bürger."],
+    ["la disuguaglianza", "die Ungleichheit", "La disuguaglianza tra ricchi e poveri cresce."],
+    ["impegnarsi per", "sich einsetzen für", "Si impegna per i diritti degli animali."],
+    ["il diritto di voto", "das Wahlrecht", "Il diritto di voto è una conquista importante."],
+    ["la manifestazione", "die Demonstration", "Migliaia di giovani hanno partecipato alla manifestazione."],
+
+    ["la sfera privata", "die Privatsphäre", "I social network minacciano la sfera privata."],
+    ["navigare in rete", "im Netz surfen", "Passa ore a navigare in rete."],
+    ["ingannevole", "irreführend", "Questo titolo è ingannevole.", "»ingannare« heißt täuschen – ingannevole führt in die Irre."],
+    ["la notizia", "die Nachricht", "Ho letto la notizia stamattina."],
+    ["diffondere", "verbreiten", "La radio ha diffuso la notizia ieri sera."],
+
+    ["candidarsi", "sich bewerben", "Si è candidata per uno stage a Milano."],
+    ["lo stipendio", "das Gehalt", "Il suo stipendio non basta per vivere a Roma."],
+    ["essere responsabile di", "verantwortlich sein für", "È responsabile di tutto il reparto."],
+    ["impegnativo", "anspruchsvoll", "È un lavoro impegnativo ma interessante."],
+    ["guadagnarsi da vivere", "seinen Lebensunterhalt verdienen", "Si guadagna da vivere come fotografo."],
+
+    ["fare fatica a", "Mühe haben zu", "Faccio fatica a concentrarmi la sera."],
+    ["testardo", "stur", "Mio fratello è davvero testardo.", "»testa« ist der Kopf – kopf-hart, also stur."],
+    ["sentirsi sopraffatto", "sich überfordert fühlen", "Mi sento sopraffatto da tutto questo lavoro."],
+    ["ammettere", "zugeben", "Alla fine ha ammesso il suo errore."],
+    ["la fiducia in sé", "das Selbstvertrauen", "Lo sport gli ha dato fiducia in sé."],
+
+    ["sottolineare", "betonen, hervorheben", "Ha sottolineato l'importanza del problema.", "»sotto-lineare« – unterstreichen, also betonen."],
+    ["al contrario", "im Gegenteil", "Non è noioso, al contrario!"],
+    ["essere convinto", "überzeugt sein", "Sono convinto che sia la soluzione migliore."],
+    ["riconoscere", "anerkennen, zugeben", "Bisogna riconoscere che ha ragione."],
+    ["ragionevole", "vernünftig", "È una proposta ragionevole."],
+
+    ["sostenere un esame", "eine Prüfung ablegen", "Sosterrà l'esame a giugno."],
+    ["ripassare", "wiederholen", "Ho ripassato tutto il fine settimana."],
+    ["il compito", "die Hausaufgabe", "Devo consegnare il compito venerdì."],
+    ["superare un esame", "eine Prüfung bestehen", "Ha superato l'esame senza problemi."],
+    ["frequentare un corso", "einen Kurs besuchen", "Frequento un corso di tedesco da settembre."],
+
+    ["accusare qualcuno di", "jemanden beschuldigen", "Lo hanno accusato di aver mentito."],
+    ["colpevole", "schuldig", "Il tribunale lo ha dichiarato colpevole.", "»colpa« ist die Schuld – colpevole trägt sie."],
+    ["la prova", "der Beweis", "Non c'era nessuna prova contro di lei."],
+    ["risolvere un conflitto", "einen Konflikt lösen", "Hanno risolto il conflitto senza avvocato."],
+    ["il processo", "der Prozess", "Il processo è durato tre settimane."]
+  ]
+};
+
+function startVokabeln(sprachen) {
+  const liste = [];
+  sprachen.forEach(function (sp) {
+    (GRUNDSTOCK[sp] || []).forEach(function (eintrag, i) {
+      liste.push(neueVokabel(sp, eintrag[0], eintrag[1], {
+        beispielsatz: eintrag[2] || "",
+        eselsbruecke: eintrag[3] || "",
+        wortfeld: WORTFELDER[Math.floor(i / 5)],
+        start: true
+      }));
+    });
+  });
+  return liste;
+}
+
+/* =========================================================================
+   ABSCHNITT 3: LEITNER - der Wiederholungsalgorithmus
+   Fünf Fächer. Richtig -> ein Fach weiter, längere Pause.
+   Falsch  -> zurück auf Fach 1, sofort wieder dran.
+   ========================================================================= */
+const INTERVALLE = [0, 1, 3, 7, 16];
+const FACHNAMEN  = ["neu", "1 Tag", "3 Tage", "1 Woche", "sitzt"];
+
+function fachFarbe(fach) { return "var(--fach-" + fach + ")"; }
+
+function verbuche(vokabel, korrekt) {
+  if (korrekt) {
+    vokabel.fach = Math.min(5, vokabel.fach + 1);
+    vokabel.statistik.richtig++;
+    vokabel.statistik.serie++;
+  } else {
+    vokabel.fach = 1;
+    vokabel.statistik.falsch++;
+    vokabel.statistik.serie = 0;
+  }
+  vokabel.faelligAm = tagePlus(INTERVALLE[vokabel.fach - 1]);
+  return vokabel.fach;
+}
+
+function faellige() {
+  const h = heute();
+  return daten.vokabeln.filter(function (v) { return v.faelligAm <= h; });
+}
+
+/* Ein hartnäckiger Fall: drei Fehler oder mehr. Für die kommen die
+   Eselsbrücken. */
+function istHartnaeckig(v) { return v.statistik.falsch >= 3; }
+
+/* =========================================================================
+   ABSCHNITT 4: ABFRAGE - Fragen stellen und Antworten vergleichen
+   ========================================================================= */
+const ARTIKEL = /^(to |the |a |an |le |la |les |un |une |il |lo |gli |i |l |der |die |das |ein |eine |sich |se |si )+/;
+
+function normalisiere(text) {
+  return String(text)
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/[.,;:!?"']/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(ARTIKEL, "")
+    .trim();
+}
+
+function varianten(loesung) {
+  return String(loesung).split(/[,/;]| oder /).map(normalisiere).filter(Boolean);
+}
+
+/* Wer keine Umlaute auf der Tastatur hat, schreibt "zoegernd" statt
+   "zögernd". Diese Schreibweise wird auf beiden Seiten gleich behandelt,
+   deshalb kann sie nichts kaputtmachen. */
+function umlautfrei(text) {
+  return text.replace(/ae/g, "a").replace(/oe/g, "o").replace(/ue/g, "u").replace(/ss/g, "s");
+}
+
+/* Abstand zweier Wörter in Tippfehlern (Damerau-Levenshtein).
+   Wichtig: das Vertauschen zweier Nachbarbuchstaben - "sustainabel" statt
+   "sustainable" - zählt als EIN Fehler. Das ist der häufigste Tippfehler
+   überhaupt; die einfache Levenshtein-Rechnung zählt ihn als zwei und
+   würde deshalb genau dort nicht nachfragen, wo es am nötigsten wäre. */
+function levenshtein(a, b) {
+  if (a === b) return 0;
+  const n = a.length, m = b.length;
+  if (!n) return m;
+  if (!m) return n;
+  const d = [];
+  for (let i = 0; i <= n; i++) d[i] = [i];
+  for (let j = 0; j <= m; j++) d[0][j] = j;
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j <= m; j++) {
+      const kosten = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + kosten);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      }
+    }
+  }
+  return d[n][m];
+}
+
+function pruefe(eingabe, loesung) {
+  const e = normalisiere(eingabe);
+  if (!e) return "falsch";
+  /* Wer alle Bedeutungen hinschreibt ("widerwillig, zögernd"), hat erst
+     recht recht - deshalb zuerst die ganze Lösung vergleichen. */
+  if (normalisiere(loesung) === e) return "richtig";
+  const moeglich = varianten(loesung);
+  if (moeglich.indexOf(e) >= 0) return "richtig";
+
+  /* Zweiter Anlauf ohne Umlaut-Ersatzschreibung, auf beiden Seiten gleich. */
+  const eOhne = umlautfrei(e);
+  if (umlautfrei(normalisiere(loesung)) === eOhne) return "richtig";
+  for (const m of moeglich) if (umlautfrei(m) === eOhne) return "richtig";
+
+  for (const m of moeglich) if (m.length >= 4 && levenshtein(eOhne, umlautfrei(m)) <= 1) return "fast";
+  return "falsch";
+}
+
+/* ---- Beispielsätze ------------------------------------------------------
+   Ehrlich gesagt: ohne Internet kann das Programm nur die FORM prüfen -
+   kommt die Vokabel überhaupt vor, ist der Satz lang genug. Ob der Satz
+   inhaltlich Sinn ergibt, kann es nicht wissen. Also sagt es das auch und
+   hebt den Satz auf, damit wir ihn zu Hause gemeinsam lesen. Genau das ist
+   der Unterschied zwischen einer Regel und einem Sprachverständnis.
+   ------------------------------------------------------------------------ */
+function wortstamm(wort) {
+  /* Das längste Wort trägt die Bedeutung - "to be in charge of" -> "charge".
+     Die letzten zwei Buchstaben fallen weg, damit auch gebeugte Formen
+     ("charged", "charges") noch passen. */
+  const teile = normalisiere(wort).split(" ").filter(Boolean);
+  const w = teile.slice().sort(function (a, b) { return b.length - a.length; })[0] || "";
+  return w.length > 5 ? w.slice(0, w.length - 2) : w;
+}
+
+function pruefeSatz(satz, vokabel) {
+  const woerter = normalisiere(satz).split(" ").filter(Boolean);
+  if (woerter.length < 4) return { ok: false, grund: "kurz" };
+  const stamm = wortstamm(vokabel.fremd);
+  const drin = woerter.some(function (w) {
+    return w.indexOf(stamm) === 0 || (stamm.indexOf(w) === 0 && w.length >= 4);
+  });
+  return drin ? { ok: true } : { ok: false, grund: "fehlt" };
+}
+
+/* ---- Übungsarten --------------------------------------------------------
+   "faellig"  die Vokabeln, die der Karteikasten für heute vorsieht
+   "wortfeld" ein Wortfeld am Stück, unabhängig vom Termin
+   "satz"     Beispielsätze zu Wörtern, die schon einmal saßen
+   ------------------------------------------------------------------------ */
+let uebungsart = "faellig";
+let wortfeldWahl = "";
+
+function wortfelder() {
+  const felder = [];
+  daten.vokabeln.forEach(function (v) { if (v.wortfeld && felder.indexOf(v.wortfeld) < 0) felder.push(v.wortfeld); });
+  return felder.sort();
+}
+
+function uebungsvorrat() {
+  if (uebungsart === "wortfeld") {
+    return daten.vokabeln.filter(function (v) { return v.wortfeld === wortfeldWahl; });
+  }
+  if (uebungsart === "satz") {
+    /* Ein Beispielsatz lohnt sich erst, wenn das Wort schon einmal saß. */
+    return daten.vokabeln.filter(function (v) { return v.statistik.richtig > 0; });
+  }
+  return faellige();
+}
+
+function waehleFrage() {
+  const vorrat = uebungsvorrat();
+  if (!vorrat.length) return null;
+  vorrat.sort(function (a, b) { return a.fach - b.fach || Math.random() - .5; });
+  const kandidaten = vorrat.slice(0, Math.min(8, vorrat.length));
+  const v = kandidaten[Math.floor(Math.random() * kandidaten.length)];
+
+  if (uebungsart === "satz") {
+    return { vokabel: v, typ: "satz", richtung: "satz", frage: v.fremd, loesung: v.deutsch, start: Date.now() };
+  }
+
+  const modus = daten.einstellungen.richtung;
+  let richtung = modus;
+  if (modus === "gemischt") richtung = Math.random() < .5 ? "de-fs" : "fs-de";
+
+  return {
+    vokabel: v,
+    typ: "wort",
+    richtung: richtung,
+    frage:   richtung === "de-fs" ? v.deutsch : v.fremd,
+    loesung: richtung === "de-fs" ? v.fremd : v.deutsch,
+    start: Date.now()
+  };
+}
+
+/* =========================================================================
+   ABSCHNITT 5: SPRACHE - Vorlesen und Aussprachekontrolle
+
+   Die Aussprachekontrolle hat drei Ausbaustufen. Sie hängen alle am selben
+   Einstiegspunkt, damit sie sich austauschen lassen:
+
+   Stufe 1  Der Browser erkennt das gesprochene Wort und wir vergleichen den
+            Text. Beantwortet die Frage "war es das richtige Wort?" -
+            nicht die Frage "klang es gut?". Läuft offline und kostenlos.
+   Stufe 2  Wir nehmen auf. Du hörst dich selbst neben dem Vorbild und
+            sicherst die Aufnahme; zu Hause werten wir sie gemeinsam aus.
+   Stufe 3  Ein professioneller Bewertungsdienst gibt eine Note je Laut.
+            Braucht ein kostenpflichtiges Konto und einen Schlüssel - der
+            Anschluss ist vorbereitet, aber noch nicht scharf geschaltet.
+   ========================================================================= */
+
+let stimmen = [];
+function ladeStimmen() {
+  if (!("speechSynthesis" in window)) return;
+  stimmen = window.speechSynthesis.getVoices() || [];
+}
+if ("speechSynthesis" in window) {
+  ladeStimmen();
+  window.speechSynthesis.addEventListener("voiceschanged", function () {
+    ladeStimmen();
+    zeigeStimmenHinweis();
+  });
+}
+
+function sprich(text, sprache) {
+  if (!("speechSynthesis" in window) || !text) return;
+  const code = VORLESE_CODE[sprache] || "de-DE";
+  try {
+    window.speechSynthesis.cancel();
+    const s = new SpeechSynthesisUtterance(String(text).replace(/\([^)]*\)/g, ""));
+    s.lang = code;
+    const passend = stimmen.find(function (v) { return v.lang === code; })
+                 || stimmen.find(function (v) { return v.lang.slice(0, 2) === code.slice(0, 2); });
+    if (passend) s.voice = passend;
+    s.rate = .92;
+    window.speechSynthesis.speak(s);
+  } catch (e) { /* keine Stimme - dann bleibt es beim Text */ }
+}
+
+const Erkenner = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+
+/* Stufe 1: Browser-Erkennung. Ruft rueckruf(text) mit dem Erkannten auf. */
+function hoereZu(sprache, rueckruf, beiFehler) {
+  if (!Erkenner) { beiFehler("Dieser Browser kann nicht zuhören."); return null; }
+  const e = new Erkenner();
+  e.lang = VORLESE_CODE[sprache] || "de-DE";
+  e.interimResults = false;
+  e.maxAlternatives = 3;
+  e.onresult = function (ev) {
+    const treffer = [];
+    for (let i = 0; i < ev.results[0].length; i++) treffer.push(ev.results[0][i].transcript);
+    rueckruf(treffer);
+  };
+  e.onerror = function (ev) {
+    beiFehler(ev.error === "not-allowed"
+      ? "Das Mikrofon ist nicht freigegeben."
+      : "Ich habe nichts verstanden. Noch einmal?");
+  };
+  try { e.start(); } catch (f) { beiFehler("Aufnahme lässt sich nicht starten."); return null; }
+  return e;
+}
+
+/* Stufe 2: Aufnehmen für die spätere Auswertung zu Hause. */
+let aufnahmeGeraet = null;
+let letzteAufnahme = null;
+
+function starteAufnahme(fertig, beiFehler) {
+  if (!navigator.mediaDevices || !window.MediaRecorder) { beiFehler("Dieses Gerät kann nicht aufnehmen."); return; }
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(function (spur) {
+    const teile = [];
+    aufnahmeGeraet = new MediaRecorder(spur);
+    aufnahmeGeraet.ondataavailable = function (ev) { if (ev.data.size) teile.push(ev.data); };
+    aufnahmeGeraet.onstop = function () {
+      spur.getTracks().forEach(function (t) { t.stop(); });
+      letzteAufnahme = new Blob(teile, { type: aufnahmeGeraet.mimeType || "audio/webm" });
+      aufnahmeGeraet = null;
+      fertig(letzteAufnahme);
+    };
+    aufnahmeGeraet.start();
+  }).catch(function () { beiFehler("Das Mikrofon ist nicht freigegeben."); });
+}
+
+function stoppeAufnahme() { if (aufnahmeGeraet && aufnahmeGeraet.state === "recording") aufnahmeGeraet.stop(); }
+
+/* Stufe 3: Anschluss für einen Bewertungsdienst. Bewusst noch nicht
+   angeschlossen - hier gehören Zugangsdaten hin, die wir zu Hause
+   eintragen, nicht in eine App, die im Bus läuft. */
+function bewerteAusspracheProfi() {
+  return Promise.reject(new Error("Stufe 3 ist noch nicht angeschlossen."));
+}
+
+/* =========================================================================
+   ABSCHNITT 6: JOURNAL UND LERNZEIT
+   Jede Antwort wird protokolliert. Lerneinheiten werden nicht gespeichert,
+   sondern aus den Zeitstempeln errechnet - weniger Daten, weniger Fehler.
+   ========================================================================= */
+
+function insJournal(frage, eingabe, korrekt, art) {
+  const e = {
+    zeit: new Date().toISOString(),
+    tag: heute(),
+    vokabelId: frage.vokabel.id,
+    sprache: frage.vokabel.sprache,
+    fremd: frage.vokabel.fremd,
+    deutsch: frage.vokabel.deutsch,
+    richtung: frage.richtung,
+    eingabe: eingabe,
+    korrekt: korrekt,
+    art: art || "tippen",          // tippen | sprechen
+    fachDanach: frage.vokabel.fach,
+    dauerMs: Date.now() - frage.start,
+    modus: daten.einstellungen.ausgabemodus
+  };
+  daten.journal.push(e);
+  return e;
+}
+
+const LUECKE = 15 * 60 * 1000;   // ab 15 Minuten Pause beginnt eine neue Einheit
+
+function lerneinheiten() {
+  const sortiert = daten.journal.slice().sort(function (a, b) { return new Date(a.zeit) - new Date(b.zeit); });
+  const einheiten = [];
+  let akt = null;
+  sortiert.forEach(function (e) {
+    const t = new Date(e.zeit).getTime();
+    if (!akt || t - akt.ende > LUECKE) {
+      akt = { start: t, ende: t, tag: e.tag, antworten: 0, richtig: 0 };
+      einheiten.push(akt);
+    }
+    akt.ende = t;
+    akt.antworten++;
+    if (e.korrekt) akt.richtig++;
+  });
+  einheiten.forEach(function (x) { x.minuten = Math.max(1, Math.round((x.ende - x.start) / 60000)); });
+  return einheiten;
+}
+
+function wocheEinheiten(start) {
+  const von = new Date((start || wochenStart()) + "T00:00:00").getTime();
+  const bis = von + 7 * 24 * 3600 * 1000;
+  return lerneinheiten().filter(function (e) { return e.start >= von && e.start < bis; });
+}
+
+/* =========================================================================
+   ABSCHNITT 7: ERZÄHLENDES LERNTAGEBUCH
+   Der Text entsteht aus dem Journal - ganze Sätze, ohne Internet.
+   Die ausführlichen Wochenrückblicke schreiben wir zu Hause gemeinsam
+   und legen sie als Einträge mit quelle "ki" daneben.
+   ========================================================================= */
+
+function zahlwort(n) {
+  const w = ["kein", "ein", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun", "zehn"];
+  return n <= 10 ? w[n] : String(n);
+}
+
+function wochenrueckblick(start) {
+  const einheiten = wocheEinheiten(start);
+  const ziel = daten.einstellungen.wochenziel;
+  if (!einheiten.length) return null;
+
+  const von = new Date(start + "T00:00:00").getTime();
+  const bis = von + 7 * 24 * 3600 * 1000;
+  const eintraege = daten.journal.filter(function (e) {
+    const t = new Date(e.zeit).getTime();
+    return t >= von && t < bis;
+  });
+  const richtig = eintraege.filter(function (e) { return e.korrekt; }).length;
+  const minuten = einheiten.reduce(function (s, e) { return s + e.minuten; }, 0);
+  const tage = new Set(einheiten.map(function (e) { return e.tag; })).size;
+
+  /* Welche Vokabel hat diese Woche am meisten Ärger gemacht? */
+  const fehler = {};
+  eintraege.filter(function (e) { return !e.korrekt; }).forEach(function (e) {
+    fehler[e.fremd] = (fehler[e.fremd] || 0) + 1;
+  });
+  const schlimmste = Object.keys(fehler).sort(function (a, b) { return fehler[b] - fehler[a]; })[0];
+
+  const saetze = [];
+  saetze.push("Du hast an " + zahlwort(tage) + (tage === 1 ? " Tag" : " Tagen") +
+    " geübt, in " + zahlwort(einheiten.length) + (einheiten.length === 1 ? " Einheit" : " Einheiten") +
+    " und insgesamt " + minuten + " Minuten.");
+
+  const quote = eintraege.length ? Math.round(richtig / eintraege.length * 100) : 0;
+  saetze.push("Von " + eintraege.length + " Antworten waren " + richtig + " richtig – das sind " + quote + " Prozent.");
+
+  if (einheiten.length >= ziel.einheiten && minuten >= ziel.einheiten * ziel.minuten) {
+    saetze.push("Damit hast du dein Wochenpensum voll geschafft.");
+  } else if (einheiten.length >= ziel.einheiten) {
+    saetze.push("Die " + ziel.einheiten + " Einheiten stehen – nur an der Zeit hat es noch gefehlt.");
+  } else {
+    const rest = ziel.einheiten - einheiten.length;
+    saetze.push("Zum Pensum " + (rest === 1 ? "fehlte noch eine Einheit" : "fehlten noch " + rest + " Einheiten") + ".");
+  }
+
+  if (schlimmste) {
+    saetze.push("Am meisten Ärger machte dir »" + schlimmste + "« mit " +
+      zahlwort(fehler[schlimmste]) + (fehler[schlimmste] === 1 ? " Fehler" : " Fehlern") + ".");
+  }
+  return saetze.join(" ");
+}
+
+/* =========================================================================
+   ABSCHNITT 8: OBERFLÄCHE
+   ========================================================================= */
+
+const el = function (id) { return document.getElementById(id); };
+function esc(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/* -------------------------- Startbildschirm ----------------------------- */
+function zeigeStart() {
+  el("s-start").hidden = false;
+  el("app").hidden = true;
+  const w = el("waehler");
+  w.innerHTML = "";
+  BENUTZER.forEach(function (info) {
+    const d = lade(info.name);
+    const anz = d.anzeigename || info.name;
+    const b = document.createElement("button");
+    b.innerHTML =
+      '<span class="initial">' + esc(info.kuerzel || anz[0]) + "</span>" +
+      '<span class="nam">' + esc(anz) + "</span>" +
+      '<span class="det">' + info.sprachen.map(function (s) { return s.toUpperCase(); }).join(" · ") + "</span>" +
+      '<span class="det">' + d.vokabeln.length + " Vokabeln · " + d.journal.length + " Übungen</span>";
+    b.addEventListener("click", function () { melde(info.name); });
+    w.appendChild(b);
+  });
+}
+
+function melde(name) {
+  benutzer = name;
+  daten = lade(name);
+  el("s-start").hidden = true;
+  el("app").hidden = false;
+  el("benutzer-initial").textContent = benutzerInfo(name).kuerzel || name[0];
+  el("benutzer-name").textContent = daten.anzeigename || name;
+  fuelleSprachwahl();
+  wechsleAnsicht("ueben");
+}
+
+el("knopf-benutzer").addEventListener("click", function () {
+  sichere();
+  benutzer = null; daten = null; aktuelleFrage = null;
+  zeigeStart();
+});
+
+/* Die Auswahllisten kennen nur die Sprachen dieses Benutzers. */
+function fuelleSprachwahl() {
+  el("neu-sprache").innerHTML = daten.sprachen.map(function (s) {
+    return '<option value="' + s + '">' + SPRACHNAMEN[s] + "</option>";
+  }).join("");
+  el("filter-sprache").innerHTML = '<option value="alle">Alle Sprachen</option>' +
+    daten.sprachen.map(function (s) { return '<option value="' + s + '">' + SPRACHNAMEN[s] + "</option>"; }).join("");
+}
+
+/* ---------------------------- Reiterwechsel ----------------------------- */
+const ANSICHTEN = ["ueben", "vokabeln", "tagebuch", "statistik", "einstellungen"];
+
+function wechsleAnsicht(name) {
+  ANSICHTEN.forEach(function (a) { el("a-" + a).hidden = (a !== name); });
+  document.querySelectorAll(".reiter button").forEach(function (b) {
+    b.setAttribute("aria-selected", String(b.dataset.ansicht === name));
+  });
+  if (name === "ueben") { zeichneUebungsart(); zeichneUeben(); }
+  if (name === "vokabeln") { fuelleWortfeldfilter(); zeichneVokabeln(); }
+  if (name === "tagebuch") zeichneTagebuch();
+  if (name === "statistik") zeichneStatistik();
+  if (name === "einstellungen") zeichneEinstellungen();
+  zeichneKasten();
+}
+
+document.querySelectorAll(".reiter button").forEach(function (b) {
+  b.addEventListener("click", function () { wechsleAnsicht(b.dataset.ansicht); });
+});
+
+/* --------------------------- Karteikastenleiste ------------------------- */
+function zeichneKasten() {
+  const zaehler = [0, 0, 0, 0, 0];
+  daten.vokabeln.forEach(function (v) { zaehler[v.fach - 1]++; });
+  el("kasten").innerHTML = zaehler.map(function (n, i) {
+    return '<div class="fach" data-fach="' + (i + 1) + '">' +
+             '<div class="balken"></div><span class="wert">' + n + "</span>" +
+             '<span class="name">' + esc(FACHNAMEN[i]) + "</span></div>";
+  }).join("");
+  el("anz-faellig").textContent = faellige().length;
+}
+
+function hebeFachHervor(fach) {
+  const f = el("kasten").querySelector('[data-fach="' + fach + '"]');
+  if (!f) return;
+  f.classList.add("hervor");
+  setTimeout(function () { f.classList.remove("hervor"); }, 900);
+}
+
+/* ------------------------------ Üben ------------------------------------ */
+/* Die Leiste über dem Karteikasten: womit wird gerade geübt? */
+function zeichneUebungsart() {
+  const felder = wortfelder();
+  if (felder.length && felder.indexOf(wortfeldWahl) < 0) wortfeldWahl = felder[0];
+
+  function knopf(art, text) {
+    return '<button class="tat klein ' + (uebungsart === art ? "" : "leise") + '" data-art="' + art + '">' + text + "</button>";
+  }
+  el("uebungsart").innerHTML =
+    knopf("faellig", "Fällige Vokabeln") +
+    (felder.length ? knopf("wortfeld", "Wortfeld") : "") +
+    knopf("satz", "Beispielsätze") +
+    (uebungsart === "wortfeld"
+      ? '<select id="wortfeld-wahl" style="width:auto">' + felder.map(function (f) {
+          return '<option value="' + esc(f) + '"' + (f === wortfeldWahl ? " selected" : "") + ">" + esc(f) + "</option>";
+        }).join("") + "</select>"
+      : "");
+
+  el("uebungsart").querySelectorAll("[data-art]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      uebungsart = b.dataset.art;
+      zeichneUebungsart();
+      zeichneUeben();
+    });
+  });
+  const wahl = el("wortfeld-wahl");
+  if (wahl) wahl.addEventListener("change", function () { wortfeldWahl = wahl.value; zeichneUeben(); });
+}
+
+function leerText() {
+  if (daten.vokabeln.length === 0) {
+    return { zeichen: "🗃️", titel: "Der Kasten ist leer",
+      text: 'Lege unter <strong>Vokabeln</strong> die erste Karte an – oder hole dir in den Einstellungen die Startvokabeln zurück.' };
+  }
+  if (uebungsart === "wortfeld") {
+    return { zeichen: "∅", titel: "Dieses Wortfeld ist leer",
+      text: "Für »" + esc(wortfeldWahl) + "« liegen keine Vokabeln im Kasten." };
+  }
+  if (uebungsart === "satz") {
+    return { zeichen: "✎", titel: "Dafür ist es noch zu früh",
+      text: "Beispielsätze schreibst du zu Wörtern, die schon einmal saßen. Übe erst ein paar fällige Vokabeln." };
+  }
+  return { zeichen: "✓", titel: "Für heute alles erledigt",
+    text: 'Alle fälligen Vokabeln sind durch. Unter <strong>Plan &amp; Tagebuch</strong> siehst du, wie du im Wochenpensum stehst – oder du übst ein Wortfeld am Stück.' };
+}
+
+function zeichneUeben() {
+  const bereich = el("uebungsbereich");
+  aktuelleFrage = waehleFrage();
+
+  if (!aktuelleFrage) {
+    const z = leerText();
+    bereich.innerHTML = '<div class="tafel leer-zustand"><div class="gross">' + z.zeichen + "</div>" +
+      "<h2>" + z.titel + "</h2><p class=\"hinweis\" style=\"margin-top:8px\">" + z.text + "</p></div>";
+    return;
+  }
+
+  if (aktuelleFrage.typ === "satz") { zeichneSatzuebung(); return; }
+
+  const f = aktuelleFrage;
+  const v = f.vokabel;
+  const sp = v.sprache;
+  const nachFremd = f.richtung === "de-fs";
+  const spracheDerFrage = nachFremd ? "de" : sp;
+
+  bereich.innerHTML =
+    '<div class="uebungskarte">' +
+      '<div class="frage-kopf">' +
+        '<span class="chip ' + sp + '">' + sp.toUpperCase() + "</span>" +
+        '<span class="mini">Fach ' + v.fach + " · " + esc(FACHNAMEN[v.fach - 1]) + "</span>" +
+        (v.wortfeld ? '<span class="marke-klein">' + esc(v.wortfeld) + "</span>" : "") +
+        (v.buch ? '<span class="marke-klein">' + esc(v.buch) + (v.lektion ? " " + esc(v.lektion) : "") + "</span>" : "") +
+        (istHartnaeckig(v) ? '<span class="marke-klein" style="border-color:var(--falsch);color:var(--falsch)">hartnäckiger Fall</span>' : "") +
+        '<span style="flex:1"></span>' +
+        (nachFremd ? "" : '<button class="hoerknopf" id="knopf-hoeren" title="Wort anhören" aria-label="Wort anhören">♪</button>') +
+      "</div>" +
+      '<div class="frage-wort">' + esc(f.frage) + "</div>" +
+      '<div class="frage-hinweis">' + (nachFremd ? "Wie heißt das auf " + SPRACHNAMEN[sp] + "?" : "Was heißt das auf Deutsch?") + "</div>" +
+      '<input type="text" id="antwort" placeholder="Deine Antwort" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">' +
+      '<div class="reihe" style="margin-top:14px">' +
+        '<button class="tat" id="knopf-pruefen">Prüfen</button>' +
+        (nachFremd ? '<button class="tat leise" id="knopf-sprechen">🎤 Antwort sprechen</button>' : "") +
+        '<button class="tat leise" id="knopf-weissnicht">Weiß ich nicht</button>' +
+      "</div>" +
+      '<div id="sprech-hinweis" class="hinweis" style="margin-top:8px"></div>' +
+      '<div id="rueckmeldung"></div>' +
+    "</div>";
+
+  const eingabe = el("antwort");
+  eingabe.focus();
+  eingabe.addEventListener("keydown", function (ev) {
+    if (ev.key === "Enter") { ev.preventDefault(); pruefeAntwort(); }
+  });
+  el("knopf-pruefen").addEventListener("click", pruefeAntwort);
+  el("knopf-weissnicht").addEventListener("click", function () { schliesseAb(false, "", "tippen"); });
+
+  const hoeren = el("knopf-hoeren");
+  if (hoeren) hoeren.addEventListener("click", function () { sprich(f.frage, spracheDerFrage); });
+
+  const sprechen = el("knopf-sprechen");
+  if (sprechen) sprechen.addEventListener("click", starteSprechpruefung);
+
+  if (!nachFremd && daten.einstellungen.ausgabemodus !== "text") sprich(f.frage, sp);
+}
+
+/* ------------------------- Beispielsatz-Übung --------------------------- */
+function zeichneSatzuebung() {
+  const f = aktuelleFrage;
+  const v = f.vokabel;
+  const sp = v.sprache;
+  const schonGeschrieben = (v.eigeneSaetze || []).length;
+
+  el("uebungsbereich").innerHTML =
+    '<div class="uebungskarte">' +
+      '<div class="frage-kopf">' +
+        '<span class="chip ' + sp + '">' + sp.toUpperCase() + "</span>" +
+        '<span class="mini">Beispielsatz</span>' +
+        (v.wortfeld ? '<span class="marke-klein">' + esc(v.wortfeld) + "</span>" : "") +
+        (schonGeschrieben ? '<span class="marke-klein">' + schonGeschrieben + " schon geschrieben</span>" : "") +
+        '<span style="flex:1"></span>' +
+        '<button class="hoerknopf" id="knopf-hoeren" title="Wort anhören" aria-label="Wort anhören">♪</button>' +
+      "</div>" +
+      '<div class="frage-wort">' + esc(v.fremd) + "</div>" +
+      '<div class="frage-hinweis">Bedeutung: ' + esc(v.deutsch) +
+        "<br>Schreib einen Satz, in dem das Wort vorkommt – so, dass jemand daran erkennt, was es bedeutet.</div>" +
+      '<textarea id="antwort" rows="2" placeholder="Dein Satz auf ' + SPRACHNAMEN[sp] + '"></textarea>' +
+      '<div class="reihe" style="margin-top:14px">' +
+        '<button class="tat" id="knopf-pruefen">Satz abgeben</button>' +
+        '<button class="tat leise" id="knopf-weissnicht">Überspringen</button>' +
+      "</div>" +
+      '<div id="sprech-hinweis" class="hinweis" style="margin-top:8px"></div>' +
+      '<div id="rueckmeldung"></div>' +
+    "</div>";
+
+  el("antwort").focus();
+  el("knopf-pruefen").addEventListener("click", function () { pruefeSatzAntwort(el("antwort").value); });
+  el("knopf-weissnicht").addEventListener("click", zeichneUeben);
+  el("knopf-hoeren").addEventListener("click", function () { sprich(v.fremd, sp); });
+}
+
+function pruefeSatzAntwort(satz) {
+  const v = aktuelleFrage.vokabel;
+  if (!satz.trim()) return;
+  const urteil = pruefeSatz(satz, v);
+
+  if (!urteil.ok) {
+    el("rueckmeldung").innerHTML =
+      '<div class="rueckmeldung fast">' +
+        '<div class="zeile"><span>≈</span><span>' +
+          (urteil.grund === "kurz" ? "Noch zu kurz" : "Das Wort fehlt im Satz") + "</span></div>" +
+        '<div class="fussnote">' + (urteil.grund === "kurz"
+          ? "Ein erklärender Satz braucht mindestens vier Wörter."
+          : "Der Satz soll »" + esc(v.fremd) + "« selbst enthalten – gebeugte Formen sind erlaubt. Kann sein, dass ich deine Form nicht erkenne: dann schick den Satz trotzdem ab.") + "</div>" +
+        '<div class="reihe" style="margin-top:11px">' +
+          '<button class="tat klein" id="satz-nochmal">Noch einmal</button>' +
+          '<button class="tat leise klein" id="satz-trotzdem">Trotzdem abgeben</button>' +
+        "</div></div>";
+    el("satz-nochmal").addEventListener("click", function () {
+      el("rueckmeldung").innerHTML = "";
+      el("antwort").focus();
+    });
+    el("satz-trotzdem").addEventListener("click", function () { nimmSatzAn(satz, false); });
+    return;
+  }
+  nimmSatzAn(satz, true);
+}
+
+/* Ein Beispielsatz verschiebt die Karte NICHT im Karteikasten. Der Kasten
+   beantwortet die Frage "kenne ich das Wort?" - einen Satz zu schreiben ist
+   eine andere Fähigkeit. Beides zu vermischen würde beide Zahlen unbrauchbar
+   machen. */
+function nimmSatzAn(satz, formOk) {
+  const f = aktuelleFrage;
+  const v = f.vokabel;
+  if (!Array.isArray(v.eigeneSaetze)) v.eigeneSaetze = [];
+  v.eigeneSaetze.push({ zeit: new Date().toISOString(), satz: satz.trim(), formOk: formOk, geprueft: false });
+  insJournal(f, satz.trim(), formOk, "satz");
+  sichere();
+
+  el("rueckmeldung").innerHTML =
+    '<div class="rueckmeldung ja">' +
+      '<div class="zeile"><span>✎</span><span>Aufgeschrieben</span></div>' +
+      '<div class="fussnote">Ich kann hier nur prüfen, ob die Vokabel im Satz vorkommt und ob er lang genug ist – ob er inhaltlich stimmt, weiß ich ohne Internet nicht. Dein Satz ist gespeichert; zu Hause lesen wir ihn gemeinsam.</div>' +
+      (v.beispielsatz ? '<div class="merkhilfe"><div class="kopf">Satz aus dem Buch</div>' + esc(v.beispielsatz) + "</div>" : "") +
+      '<div class="reihe" style="margin-top:12px"><button class="tat" id="knopf-weiter">Weiter</button></div>' +
+    "</div>";
+
+  el("knopf-pruefen").disabled = true;
+  el("antwort").disabled = true;
+  const weiter = el("knopf-weiter");
+  weiter.focus();
+  weiter.addEventListener("click", zeichneUeben);
+  setTimeout(function () { document.addEventListener("keydown", weiterMitEnter); }, 0);
+}
+
+/* -------------------- Aussprachekontrolle in der Übung ------------------ */
+function starteSprechpruefung() {
+  const f = aktuelleFrage;
+  const stufe = daten.einstellungen.aussprachestufe;
+  const knopf = el("knopf-sprechen");
+  const hinweis = el("sprech-hinweis");
+
+  if (stufe === 3) {
+    hinweis.textContent = "Stufe 3 ist vorbereitet, aber noch nicht angeschlossen – sie braucht einen kostenpflichtigen Bewertungsdienst. Bis dahin arbeitet die Kontrolle auf Stufe " +
+      (Erkenner ? "1" : "2") + ".";
+  }
+
+  /* Stufe 2: aufnehmen, selbst vergleichen, Aufnahme für zu Hause sichern. */
+  if (stufe === 2 || (stufe === 3 && !Erkenner) || !Erkenner) {
+    if (knopf.dataset.laeuft === "1") { stoppeAufnahme(); return; }
+    knopf.dataset.laeuft = "1";
+    knopf.textContent = "⏹ Aufnahme beenden";
+    hinweis.textContent = "Sprich das Wort – dann Aufnahme beenden.";
+    starteAufnahme(function (blob) {
+      knopf.dataset.laeuft = "";
+      knopf.textContent = "🎤 Antwort sprechen";
+      zeigeAufnahmeVergleich(blob, f);
+    }, function (fehlertext) {
+      knopf.dataset.laeuft = "";
+      knopf.textContent = "🎤 Antwort sprechen";
+      hinweis.textContent = fehlertext;
+    });
+    return;
+  }
+
+  /* Stufe 1: der Browser hört zu und wir vergleichen den erkannten Text. */
+  knopf.disabled = true;
+  knopf.textContent = "🎤 Ich höre …";
+  hinweis.textContent = "Sprich das Wort deutlich aus.";
+  hoereZu(f.vokabel.sprache, function (treffer) {
+    knopf.disabled = false;
+    knopf.textContent = "🎤 Antwort sprechen";
+    const bestes = treffer.find(function (t) { return pruefe(t, f.loesung) === "richtig"; })
+                || treffer.find(function (t) { return pruefe(t, f.loesung) === "fast"; })
+                || treffer[0];
+    el("antwort").value = bestes;
+    hinweis.textContent = "Verstanden: »" + bestes + "«" +
+      (treffer.length > 1 ? " (auch gehört: " + treffer.slice(1).join(", ") + ")" : "");
+    schliesseAb(pruefe(bestes, f.loesung) === "richtig", bestes, "sprechen");
+  }, function (fehlertext) {
+    knopf.disabled = false;
+    knopf.textContent = "🎤 Antwort sprechen";
+    hinweis.textContent = fehlertext;
+  });
+}
+
+function zeigeAufnahmeVergleich(blob, f) {
+  const url = URL.createObjectURL(blob);
+  el("sprech-hinweis").innerHTML =
+    '<div class="merkhilfe" style="border-style:solid">' +
+      '<div class="kopf">Aussprache Stufe 2 · Selbstvergleich</div>' +
+      '<div class="reihe" style="margin-top:6px">' +
+        '<button class="tat leise klein" id="knopf-vorbild">Vorbild hören</button>' +
+        '<audio controls src="' + url + '" style="height:34px"></audio>' +
+        '<button class="tat leise klein" id="knopf-aufnahme-sichern">Aufnahme sichern</button>' +
+      "</div>" +
+      '<p class="hinweis" style="margin-top:8px">Höre beides nacheinander. Gesicherte Aufnahmen werten wir zu Hause gemeinsam aus – dort kann eine KI wirklich sagen, woran es liegt.</p>' +
+    "</div>";
+  el("knopf-vorbild").addEventListener("click", function () { sprich(f.loesung, f.vokabel.sprache); });
+  el("knopf-aufnahme-sichern").addEventListener("click", function () {
+    sichereDatei("aussprache-" + kurzname(daten.anzeigename || daten.benutzer) + "-" +
+      f.vokabel.fremd.replace(/[^a-zA-Z]+/g, "-").toLowerCase() + ".webm", blob,
+      el("sprech-hinweis"));
+  });
+}
+
+/* ------------------------- Antwort auswerten ---------------------------- */
+function pruefeAntwort() {
+  const eingabe = el("antwort").value;
+  const ergebnis = pruefe(eingabe, aktuelleFrage.loesung);
+
+  if (ergebnis === "fast") {
+    el("rueckmeldung").innerHTML =
+      '<div class="rueckmeldung fast">' +
+        '<div class="zeile"><span>≈</span><span>Fast richtig</span></div>' +
+        '<div class="loesung">' + esc(aktuelleFrage.loesung) + "</div>" +
+        '<div class="fussnote">Du hattest »' + esc(eingabe) + '« geschrieben. War das nur ein Tippfehler?</div>' +
+        '<div class="reihe" style="margin-top:11px">' +
+          '<button class="tat klein" id="fast-ja">Zählt als richtig</button>' +
+          '<button class="tat leise klein" id="fast-nein">War falsch</button>' +
+        "</div></div>";
+    el("knopf-pruefen").disabled = true;
+    el("knopf-weissnicht").disabled = true;
+    el("fast-ja").addEventListener("click", function () { schliesseAb(true, eingabe, "tippen"); });
+    el("fast-nein").addEventListener("click", function () { schliesseAb(false, eingabe, "tippen"); });
+    return;
+  }
+  schliesseAb(ergebnis === "richtig", eingabe, "tippen");
+}
+
+function schliesseAb(korrekt, eingabe, art) {
+  const f = aktuelleFrage;
+  const v = f.vokabel;
+  const fachVorher = v.fach;
+  const fachNachher = verbuche(v, korrekt);
+  const journalEintrag = insJournal(f, eingabe, korrekt, art);
+  sichere();
+  zeichneKasten();
+  hebeFachHervor(fachNachher);
+
+  const modus = daten.einstellungen.ausgabemodus;
+  const zeigeText = modus !== "sprache";
+  const spracheDerLoesung = f.richtung === "de-fs" ? v.sprache : "de";
+  if (modus !== "text") sprich(f.loesung, spracheDerLoesung);
+
+  const bewegung = korrekt
+    ? (fachVorher === 5
+        ? "Bleibt in Fach 5 – nächste Abfrage in 16 Tagen."
+        : "Wandert von Fach " + fachVorher + " nach Fach " + fachNachher + " – nächste Abfrage in " +
+          INTERVALLE[fachNachher - 1] + (INTERVALLE[fachNachher - 1] === 1 ? " Tag." : " Tagen."))
+    : "Zurück in Fach 1 – kommt heute noch einmal dran.";
+
+  el("rueckmeldung").innerHTML =
+    '<div class="rueckmeldung ' + (korrekt ? "ja" : "nein") + '">' +
+      '<div class="zeile"><span>' + (korrekt ? "✓" : "✗") + "</span><span>" + (korrekt ? "Richtig" : "Falsch") + "</span></div>" +
+      (zeigeText
+        ? '<div class="loesung">' + esc(f.loesung) + "</div>"
+        : '<div class="reihe" style="margin-top:7px">' +
+            '<button class="tat leise klein" id="knopf-zeigen">Lösung anzeigen</button>' +
+            '<button class="tat leise klein" id="knopf-nochmal">Noch einmal hören</button></div>') +
+      '<div class="fussnote">' + bewegung + "</div>" +
+      (v.beispielsatz && zeigeText ? '<div class="satz">' + esc(v.beispielsatz) + "</div>" : "") +
+      ((!korrekt && v.eselsbruecke)
+        ? '<div class="merkhilfe"><div class="kopf">Eselsbrücke</div>' + esc(v.eselsbruecke) + "</div>" : "") +
+      ((!korrekt && !v.eselsbruecke && istHartnaeckig(v))
+        ? '<div class="merkhilfe"><div class="kopf">Hartnäckiger Fall</div>' +
+          "Diese Vokabel hat dich jetzt " + v.statistik.falsch + " Mal erwischt. Schreib dir eine eigene Eselsbrücke auf – oder wir bauen zu Hause gemeinsam eine." +
+          '<div class="reihe" style="margin-top:9px"><button class="tat leise klein" id="knopf-eselsbruecke">Eselsbrücke aufschreiben</button></div></div>' : "") +
+      '<div class="reihe" style="margin-top:12px">' +
+        '<button class="tat" id="knopf-weiter">Weiter</button>' +
+        '<button class="tat leise klein" id="knopf-widerspruch">Ich widerspreche</button>' +
+      "</div>" +
+    "</div>";
+
+  el("knopf-pruefen").disabled = true;
+  el("knopf-weissnicht").disabled = true;
+  const sprechKnopf = el("knopf-sprechen");
+  if (sprechKnopf) sprechKnopf.disabled = true;
+  const antwortFeld = el("antwort");
+  if (antwortFeld) antwortFeld.disabled = true;
+
+  const zeigen = el("knopf-zeigen");
+  if (zeigen) zeigen.addEventListener("click", function () {
+    zeigen.outerHTML = '<div class="loesung">' + esc(f.loesung) + "</div>";
+  });
+  const nochmal = el("knopf-nochmal");
+  if (nochmal) nochmal.addEventListener("click", function () { sprich(f.loesung, spracheDerLoesung); });
+
+  const merk = el("knopf-eselsbruecke");
+  if (merk) merk.addEventListener("click", function () { frageEselsbruecke(v); });
+
+  el("knopf-widerspruch").addEventListener("click", function () {
+    zeigeWiderspruch(journalEintrag, v, korrekt, eingabe);
+  });
+
+  const weiter = el("knopf-weiter");
+  weiter.focus();
+  weiter.addEventListener("click", zeichneUeben);
+  setTimeout(function () { document.addEventListener("keydown", weiterMitEnter); }, 0);
+}
+
+function weiterMitEnter(ev) {
+  /* Das Enter, das die Antwort abgeschickt hat, darf nicht gleich weiterspringen. */
+  if (ev.target && (ev.target.id === "antwort" || ev.target.tagName === "TEXTAREA")) return;
+  if (ev.key === "Enter" && el("knopf-weiter")) {
+    ev.preventDefault();
+    document.removeEventListener("keydown", weiterMitEnter);
+    zeichneUeben();
+  }
+}
+
+/* --------------------- "Ich widerspreche" ------------------------------
+   Ein Programm kann sich irren, und wer widerspricht, soll nicht als
+   Fehler in der Statistik landen. Der Widerspruch wird begründet, ins
+   Journal geschrieben und in der Statistik gesammelt - damit wir zu Hause
+   nachsehen können, wer recht hatte.
+   ---------------------------------------------------------------------- */
+function zeigeWiderspruch(journalEintrag, vokabel, korrekt, eingabe) {
+  if (el("widerspruch-feld")) return;
+  const kasten = document.createElement("div");
+  kasten.className = "merkhilfe";
+  kasten.style.borderStyle = "solid";
+  kasten.innerHTML =
+    '<div class="kopf">Ich widerspreche</div>' +
+    '<p class="hinweis" style="margin-bottom:8px">Was war deiner Meinung nach richtig? Deine Begründung landet im Journal – wir schauen sie uns gemeinsam an.</p>' +
+    '<textarea id="widerspruch-feld" rows="2" placeholder="' +
+      (korrekt ? "Das hätte nicht zählen dürfen, weil …" : "Meine Antwort war richtig, weil …") + '"></textarea>' +
+    '<div class="reihe" style="margin-top:9px">' +
+      '<button class="tat klein" id="widerspruch-ok">Widerspruch eintragen</button>' +
+      '<button class="tat leise klein" id="widerspruch-weg">Doch nicht</button>' +
+    "</div>";
+  el("knopf-widerspruch").parentNode.insertAdjacentElement("beforebegin", kasten);
+  el("widerspruch-feld").focus();
+
+  el("widerspruch-weg").addEventListener("click", function () { kasten.remove(); });
+  el("widerspruch-ok").addEventListener("click", function () {
+    const grund = el("widerspruch-feld").value.trim();
+    journalEintrag.widerspruch = { zeit: new Date().toISOString(), begruendung: grund, warKorrekt: korrekt };
+    vokabel.umstritten = true;
+
+    /* Ein Widerspruch gegen ein "falsch" dreht die Bewertung um: die Karte
+       wandert doch nach oben und der Fehler wird zurückgenommen. */
+    if (!korrekt) {
+      vokabel.statistik.falsch = Math.max(0, vokabel.statistik.falsch - 1);
+      vokabel.statistik.richtig++;
+      vokabel.fach = Math.min(5, vokabel.fach + 1);
+      vokabel.faelligAm = tagePlus(INTERVALLE[vokabel.fach - 1]);
+      journalEintrag.korrekt = true;
+      journalEintrag.fachDanach = vokabel.fach;
+    }
+    sichere();
+    zeichneKasten();
+    kasten.innerHTML = '<div class="kopf">Widerspruch eingetragen</div>' +
+      (korrekt
+        ? "Notiert. Wir sehen ihn uns beim Wochenrückblick an."
+        : "Notiert – die Vokabel zählt jetzt als gewusst und ist ein Fach weitergewandert.");
+  });
+}
+
+function frageEselsbruecke(vokabel) {
+  const kasten = el("knopf-eselsbruecke").closest(".merkhilfe");
+  kasten.innerHTML =
+    '<div class="kopf">Deine Eselsbrücke für »' + esc(vokabel.fremd) + '«</div>' +
+    '<textarea id="esel-feld" rows="2" placeholder="Woran willst du dich erinnern?"></textarea>' +
+    '<div class="reihe" style="margin-top:9px"><button class="tat klein" id="esel-ok">Merken</button></div>';
+  el("esel-feld").focus();
+  el("esel-ok").addEventListener("click", function () {
+    const text = el("esel-feld").value.trim();
+    if (!text) return;
+    vokabel.eselsbruecke = text;
+    sichere();
+    kasten.innerHTML = '<div class="kopf">Eselsbrücke</div>' + esc(text);
+  });
+}
+
+/* ---------------------------- Vokabelliste ------------------------------ */
+el("knopf-anlegen").addEventListener("click", function () {
+  const fremd = el("neu-fremd").value.trim();
+  const deutsch = el("neu-deutsch").value.trim();
+  const hinweis = el("anlege-hinweis");
+  if (!fremd || !deutsch) { hinweis.textContent = "Bitte beide Felder ausfüllen – Fremdsprache und Deutsch."; return; }
+  const sp = el("neu-sprache").value;
+  daten.vokabeln.push(neueVokabel(sp, fremd, deutsch, {
+    beispielsatz: el("neu-satz").value.trim(),
+    wortfeld: el("neu-wortfeld").value.trim(),
+    lektion: el("neu-lektion").value.trim()
+  }));
+  sichere();
+  ["neu-fremd", "neu-deutsch", "neu-satz"].forEach(function (i) { el(i).value = ""; });
+  el("neu-fremd").focus();
+  hinweis.textContent = "»" + fremd + "« liegt jetzt in Fach 1.";
+  fuelleWortfeldfilter();
+  zeichneVokabeln();
+  zeichneKasten();
+});
+
+function fuelleWortfeldfilter() {
+  const felder = [];
+  daten.vokabeln.forEach(function (v) { if (v.wortfeld && felder.indexOf(v.wortfeld) < 0) felder.push(v.wortfeld); });
+  felder.sort();
+  const aktuell = el("filter-wortfeld").value;
+  el("filter-wortfeld").innerHTML = '<option value="alle">Alle Wortfelder</option>' +
+    felder.map(function (f) { return '<option value="' + esc(f) + '">' + esc(f) + "</option>"; }).join("");
+  if (aktuell) el("filter-wortfeld").value = aktuell;
+}
+
+/* Neue Vokabel einsprechen statt tippen: dieselbe Browser-Erkennung wie bei
+   der Aussprachekontrolle, nur füllt sie hier das Eingabefeld. */
+el("knopf-neu-sprechen").addEventListener("click", function () {
+  const knopf = el("knopf-neu-sprechen");
+  const hinweis = el("anlege-hinweis");
+  if (!Erkenner) {
+    hinweis.textContent = "Dieser Browser kann nicht zuhören – auf iPad und iPhone ist das häufig so. Tippen geht immer.";
+    return;
+  }
+  knopf.classList.add("laeuft");
+  hinweis.textContent = "Sprich die Vokabel auf " + SPRACHNAMEN[el("neu-sprache").value] + ".";
+  hoereZu(el("neu-sprache").value, function (treffer) {
+    knopf.classList.remove("laeuft");
+    el("neu-fremd").value = treffer[0];
+    hinweis.textContent = treffer.length > 1
+      ? "Verstanden: »" + treffer[0] + "« – gehört habe ich auch: " + treffer.slice(1).join(", ") + ". Bitte nachsehen und berichtigen."
+      : "Verstanden: »" + treffer[0] + "«. Bitte nachsehen und berichtigen.";
+    el("neu-deutsch").focus();
+  }, function (fehlertext) {
+    knopf.classList.remove("laeuft");
+    hinweis.textContent = fehlertext;
+  });
+});
+
+el("filter-sprache").addEventListener("change", zeichneVokabeln);
+el("filter-wortfeld").addEventListener("change", zeichneVokabeln);
+
+function zeichneVokabeln() {
+  const fs = el("filter-sprache").value;
+  const fw = el("filter-wortfeld").value || "alle";
+  const liste = daten.vokabeln.filter(function (v) {
+    return (fs === "alle" || v.sprache === fs) && (fw === "alle" || v.wortfeld === fw);
+  });
+  el("anz-vokabeln").textContent = liste.length + (liste.length === 1 ? " Karte" : " Karten");
+
+  const ziel = el("vokabelliste");
+  if (!liste.length) {
+    ziel.innerHTML = '<div class="tafel leer-zustand"><p class="hinweis">Keine Vokabeln in dieser Auswahl.</p></div>';
+    return;
+  }
+  ziel.innerHTML = '<div class="liste">' + liste.slice().reverse().map(function (v) {
+    return '<div class="zeile-vokabel">' +
+      '<span class="chip ' + v.sprache + '">' + v.sprache.toUpperCase() + "</span>" +
+      '<span class="fremd">' + esc(v.fremd) + "</span>" +
+      '<span class="deutsch">' + esc(v.deutsch) + "</span>" +
+      '<span class="flagge" title="💡 Eselsbrücke · ✎ eigener Beispielsatz">' +
+        (v.eselsbruecke ? "💡" : "") + ((v.eigeneSaetze || []).length ? "✎" : "") + "</span>" +
+      '<span class="fachpunkt" style="background:' + fachFarbe(v.fach) + '" title="Fach ' + v.fach + '">' + v.fach + "</span>" +
+      '<button class="loeschen" data-id="' + v.id + '" title="Vokabel löschen" aria-label="Vokabel löschen">✕</button>' +
+    "</div>";
+  }).join("") + "</div>";
+
+  ziel.querySelectorAll(".loeschen").forEach(function (b) {
+    b.addEventListener("click", function () {
+      daten.vokabeln = daten.vokabeln.filter(function (v) { return v.id !== b.dataset.id; });
+      sichere();
+      zeichneVokabeln();
+      zeichneKasten();
+    });
+  });
+}
+
+/* --------------------------- Lernplan für heute -------------------------
+   Der Plan wird nicht erfunden, sondern abgeleitet: aus dem Karteikasten
+   (was ist fällig), aus dem Journal (was macht Ärger) und aus dem Bestand
+   (wo fehlt noch eine Eselsbrücke oder ein eigener Satz). So kann man ihn
+   nachrechnen - genau das sollen die Schüler auch tun.
+   ------------------------------------------------------------------------ */
+function zeichneHeutePlan() {
+  const offen = faellige();
+  const proSprache = {};
+  offen.forEach(function (v) { proSprache[v.sprache] = (proSprache[v.sprache] || 0) + 1; });
+
+  const hartOhneEsel = daten.vokabeln.filter(function (v) { return istHartnaeckig(v) && !v.eselsbruecke; });
+  const reifOhneSatz = daten.vokabeln.filter(function (v) {
+    return v.fach >= 3 && !(v.eigeneSaetze && v.eigeneSaetze.length);
+  });
+  /* Erfahrungswert: rund neun Sekunden je Abfrage. */
+  const minuten = Math.max(1, Math.round(offen.length * 9 / 60));
+
+  const punkte = [];
+  if (offen.length) {
+    const aufteilung = Object.keys(proSprache).map(function (sp) {
+      return sp.toUpperCase() + " " + proSprache[sp];
+    }).join(" · ");
+    punkte.push({
+      zahl: offen.length,
+      titel: offen.length === 1 ? "fällige Vokabel" : "fällige Vokabeln",
+      text: aufteilung + " – etwa " + minuten + " Minuten. Das ist dein Pflichtteil für heute."
+    });
+  }
+  if (hartOhneEsel.length) {
+    punkte.push({
+      zahl: hartOhneEsel.length,
+      titel: hartOhneEsel.length === 1 ? "hartnäckiger Fall" : "hartnäckige Fälle",
+      text: "Ohne Eselsbrücke: " + hartOhneEsel.slice(0, 4).map(function (v) { return "»" + esc(v.fremd) + "«"; }).join(", ") +
+            (hartOhneEsel.length > 4 ? " und weitere" : "") + ". Für die bauen wir zu Hause Merkhilfen."
+    });
+  }
+  if (reifOhneSatz.length) {
+    punkte.push({
+      zahl: reifOhneSatz.length,
+      titel: "Wörter für Beispielsätze",
+      text: "Diese Vokabeln sitzen schon. Schreib Sätze dazu – dann kannst du sie nicht nur übersetzen, sondern benutzen."
+    });
+  }
+
+  el("heute-plan").innerHTML = punkte.length
+    ? punkte.map(function (p) {
+        return '<div class="quote-zeile" style="grid-template-columns:52px 1fr;align-items:start;padding:9px 0;border-top:1px solid var(--linie)">' +
+          '<span class="zahl" style="font-size:1.5rem;font-weight:600;line-height:1.1">' + p.zahl + "</span>" +
+          '<span><strong style="font-size:.9375rem">' + p.titel + "</strong>" +
+          '<div class="hinweis">' + p.text + "</div></span></div>";
+      }).join("")
+    : '<p class="hinweis">Heute steht nichts an. Der Karteikasten hat für dich frei – wenn du trotzdem üben willst, nimm dir unter <strong>Üben</strong> ein Wortfeld vor.</p>';
+}
+
+/* ------------------------------ Tagebuch -------------------------------- */
+function zeichneTagebuch() {
+  zeichneHeutePlan();
+  const ziel = daten.einstellungen.wochenziel;
+  const einheiten = wocheEinheiten();
+  const minuten = einheiten.reduce(function (s, e) { return s + e.minuten; }, 0);
+  const sollMinuten = ziel.einheiten * ziel.minuten;
+
+  /* Ein Kästchen je geplanter Einheit - voll, angefangen oder offen. */
+  let kaesten = "";
+  for (let i = 0; i < Math.max(ziel.einheiten, einheiten.length); i++) {
+    const e = einheiten[i];
+    const zustand = !e ? "" : (e.minuten >= ziel.minuten ? "voll" : "teil");
+    kaesten += '<div class="einheit ' + zustand + '">' + (e ? e.minuten + "′" : "–") + "</div>";
+  }
+  el("wochenziel").innerHTML =
+    '<div class="einheiten">' + kaesten + "</div>" +
+    '<div><div class="zahl" style="font-size:1.35rem;font-weight:600">' + einheiten.length + " von " + ziel.einheiten + " Einheiten</div>" +
+    '<div class="hinweis">' + minuten + " von " + sollMinuten + " Minuten diese Woche</div></div>";
+
+  const offen = ziel.einheiten - einheiten.length;
+  el("wochen-text").textContent = offen <= 0
+    ? "Pensum geschafft. Alles Weitere ist Zugabe."
+    : "Diese Woche noch " + (offen === 1 ? "eine Einheit" : offen + " Einheiten") + " à etwa " + ziel.minuten + " Minuten.";
+
+  /* Die letzten acht Wochen erzählen. */
+  const eintraege = [];
+  for (let i = 0; i < 8; i++) {
+    const start = tagePlus(-7 * i, wochenStart());
+    const eigene = daten.tagebuch.filter(function (t) { return t.woche === start; });
+    const text = wochenrueckblick(start);
+    if (!text && !eigene.length) continue;
+    const ende = tagePlus(6, start);
+    const kopf = "Woche vom " + datumKurz(start) + " bis " + datumKurz(ende) + (i === 0 ? " · laufend" : "");
+    if (text) eintraege.push('<div class="eintrag"><div class="datum">' + kopf + '</div><div class="text">' + esc(text) + "</div></div>");
+    eigene.forEach(function (t) {
+      eintraege.push('<div class="eintrag ki"><div class="datum">' + kopf + " · " +
+        (t.quelle === "ki" ? "gemeinsam geschrieben" : "eigener Eintrag") +
+        '</div><div class="text">' + esc(t.text) + "</div></div>");
+    });
+  }
+
+  el("tagebuch").innerHTML = eintraege.length
+    ? '<div class="tafel stapel">' + eintraege.join("") + "</div>"
+    : '<div class="tafel leer-zustand"><p class="hinweis">Noch nichts zu erzählen. Sobald du geübt hast, schreibt sich hier jede Woche von selbst ein Eintrag.</p></div>';
+}
+
+function datumKurz(iso) { return Number(iso.slice(8)) + "." + Number(iso.slice(5, 7)) + "."; }
+
+/* ------------------------------ Statistik ------------------------------- */
+function zeichneStatistik() {
+  /* Beispielsätze zählen nicht in die Trefferquote: sie messen eine andere
+     Fähigkeit und ihre Bewertung findet ohnehin erst zu Hause statt. */
+  const alle = daten.journal;
+  const j = alle.filter(function (e) { return e.art !== "satz"; });
+  const gesamt = j.length;
+  const richtig = j.filter(function (e) { return e.korrekt; }).length;
+  const quote = gesamt ? Math.round(richtig / gesamt * 100) : 0;
+  const heutigen = alle.filter(function (e) { return e.tag === heute(); }).length;
+  const minutenGesamt = lerneinheiten().reduce(function (s, e) { return s + e.minuten; }, 0);
+
+  el("kacheln").innerHTML =
+    kachel(daten.vokabeln.length, "Vokabeln im Kasten") +
+    kachel(gesamt ? quote + " %" : "–", "Trefferquote gesamt") +
+    kachel(heutigen, "Übungen heute") +
+    kachel(minutenGesamt + "′", "Lernzeit insgesamt") +
+    kachel(daten.vokabeln.reduce(function (s, v) { return s + ((v.eigeneSaetze || []).length); }, 0), "eigene Beispielsätze");
+
+  const tage = [];
+  for (let i = 13; i >= 0; i--) tage.push(tagePlus(-i));
+  const proTag = tage.map(function (t) { return j.filter(function (e) { return e.tag === t; }).length; });
+  const maxTag = Math.max(1, Math.max.apply(null, proTag));
+
+  el("diagramm-tage").innerHTML = proTag.map(function (n, i) {
+    return '<div class="saeule' + (n === 0 ? " leer" : "") + '" data-tipp="' +
+      datumKurz(tage[i]) + " · " + n + (n === 1 ? " Übung" : " Übungen") + '">' +
+      '<div class="fuellung" style="height:' + Math.max(Math.round(n / maxTag * 100), n ? 4 : 2) + '%"></div></div>';
+  }).join("");
+  el("achse-tage").innerHTML = tage.map(function (t, i) {
+    return "<span>" + (i % 3 === 0 ? Number(t.slice(8)) + "." : "") + "</span>";
+  }).join("");
+  ruesteTipps(el("diagramm-tage"));
+
+  el("quoten").innerHTML = daten.sprachen.map(function (sp) {
+    const e = j.filter(function (x) { return x.sprache === sp; });
+    const r = e.filter(function (x) { return x.korrekt; }).length;
+    const p = e.length ? Math.round(r / e.length * 100) : 0;
+    return '<div class="quote-zeile">' +
+      '<span class="chip ' + sp + '">' + sp.toUpperCase() + "</span>" +
+      '<span class="quote-bahn"><span class="quote-fuellung" style="width:' + (e.length ? p : 0) + '%;background:var(--sprache-' + sp + ')"></span></span>' +
+      '<span class="zahl" style="font-size:.8125rem">' +
+        (e.length ? p + ' % <span style="color:var(--tinte-3)">(' + r + "/" + e.length + ")</span>"
+                  : '<span style="color:var(--tinte-3)">noch nicht geübt</span>') +
+      "</span></div>";
+  }).join("");
+
+  const schwer = daten.vokabeln
+    .filter(function (v) { return v.statistik.falsch > 0; })
+    .sort(function (a, b) {
+      return b.statistik.falsch - a.statistik.falsch ||
+        (b.statistik.falsch / (b.statistik.falsch + b.statistik.richtig)) -
+        (a.statistik.falsch / (a.statistik.falsch + a.statistik.richtig));
+    }).slice(0, 10);
+
+  const tab = el("tabelle-schwer");
+  if (!schwer.length) {
+    tab.innerHTML = "";
+    el("schwer-hinweis").textContent = "Noch keine Fehler verzeichnet – hier erscheinen die hartnäckigen Fälle, sobald welche auftauchen.";
+  } else {
+    const maxFalsch = schwer[0].statistik.falsch;
+    tab.innerHTML =
+      "<thead><tr><th>Sprache</th><th>Vokabel</th><th>Deutsch</th><th style='text-align:right'>Fehler</th><th style='width:84px'></th></tr></thead><tbody>" +
+      schwer.map(function (v) {
+        return "<tr>" +
+          '<td><span class="chip ' + v.sprache + '">' + v.sprache.toUpperCase() + "</span></td>" +
+          '<td style="font-family:var(--schrift-text);font-weight:600">' + esc(v.fremd) + (v.eselsbruecke ? " 💡" : "") + "</td>" +
+          '<td style="font-family:var(--schrift-text);color:var(--tinte-2)">' + esc(v.deutsch) + "</td>" +
+          '<td class="r">' + v.statistik.falsch + "</td>" +
+          '<td><span class="quote-bahn" style="display:block"><span class="quote-fuellung" style="width:' +
+            Math.round(v.statistik.falsch / maxFalsch * 100) + '%;background:var(--tinte-2)"></span></span></td></tr>';
+      }).join("") + "</tbody>";
+    const ohneEsel = schwer.filter(function (v) { return istHartnaeckig(v) && !v.eselsbruecke; }).length;
+    el("schwer-hinweis").textContent = ohneEsel
+      ? ohneEsel + (ohneEsel === 1 ? " hartnäckiger Fall wartet" : " hartnäckige Fälle warten") + " noch auf eine Eselsbrücke."
+      : "Alle hartnäckigen Fälle haben eine Eselsbrücke.";
+  }
+
+  const strittig = j.filter(function (e) { return e.widerspruch; });
+  el("widersprueche").innerHTML = strittig.length
+    ? strittig.slice().reverse().slice(0, 12).map(function (e) {
+        return '<div class="eintrag" style="margin-bottom:12px"><div class="datum">' +
+          datumKurz(e.tag) + " · " + esc(e.fremd) + " → " + esc(e.deutsch) + "</div>" +
+          '<div class="text" style="font-size:.9375rem">Deine Antwort: »' + esc(e.eingabe || "–") + "«" +
+          (e.widerspruch.begruendung ? "<br>Begründung: " + esc(e.widerspruch.begruendung) : "") + "</div></div>";
+      }).join("")
+    : '<p class="hinweis">Noch kein Widerspruch. Wenn das Programm dir unrecht tut, sag es ihm – der Knopf sitzt direkt unter jeder Auswertung.</p>';
+}
+
+function kachel(wert, unter) {
+  return '<div class="kachel"><div class="gross">' + esc(wert) + '</div><div class="unter">' + esc(unter) + "</div></div>";
+}
+
+let tippKasten = null;
+function ruesteTipps(behaelter) {
+  behaelter.querySelectorAll("[data-tipp]").forEach(function (s) {
+    s.addEventListener("pointerenter", function () {
+      if (!tippKasten) {
+        tippKasten = document.createElement("div");
+        tippKasten.className = "werkzeugtipp";
+        document.body.appendChild(tippKasten);
+      }
+      tippKasten.textContent = s.dataset.tipp;
+      const r = s.getBoundingClientRect();
+      tippKasten.style.left = Math.max(8, Math.min(window.innerWidth - 160, r.left + r.width / 2 - 60)) + "px";
+      tippKasten.style.top = (r.top - 30) + "px";
+      tippKasten.hidden = false;
+    });
+    s.addEventListener("pointerleave", function () { if (tippKasten) tippKasten.hidden = true; });
+  });
+}
+
+/* ---------------------------- Einstellungen ----------------------------- */
+const MODI = [["text", "Nur Text"], ["sprache", "Nur Sprache"], ["beides", "Text und Sprache"]];
+const RICHTUNGEN = [["gemischt", "Gemischt"], ["fs-de", "Fremdsprache → Deutsch"], ["de-fs", "Deutsch → Fremdsprache"]];
+const STUFEN = [[1, "Stufe 1 · Browser hört zu"], [2, "Stufe 2 · Aufnahme für zu Hause"], [3, "Stufe 3 · Profi-Bewertung"]];
+
+function knopfreihe(behaelter, eintraege, istAktiv, beiWahl) {
+  el(behaelter).innerHTML = eintraege.map(function (e) {
+    return '<button class="tat ' + (istAktiv(e[0]) ? "" : "leise") + '" data-wert="' + e[0] + '">' + e[1] + "</button>";
+  }).join("");
+  el(behaelter).querySelectorAll("button").forEach(function (b) {
+    b.addEventListener("click", function () { beiWahl(b.dataset.wert); sichere(); zeichneEinstellungen(); });
+  });
+}
+
+function zeichneEinstellungen() {
+  const e = daten.einstellungen;
+  knopfreihe("modus-wahl", MODI,
+    function (w) { return e.ausgabemodus === w; },
+    function (w) { e.ausgabemodus = w; });
+  knopfreihe("richtung-wahl", RICHTUNGEN,
+    function (w) { return e.richtung === w; },
+    function (w) { e.richtung = w; });
+  knopfreihe("aussprache-wahl", STUFEN,
+    function (w) { return e.aussprachestufe === Number(w); },
+    function (w) { e.aussprachestufe = Number(w); });
+
+  el("anzeigename").value = daten.anzeigename || daten.benutzer;
+  el("ziel-einheiten").value = e.wochenziel.einheiten;
+  el("ziel-minuten").value = e.wochenziel.minuten;
+
+  const texte = {
+    1: Erkenner
+        ? "Der Browser erkennt dein gesprochenes Wort und vergleicht es mit der Lösung. Er beantwortet damit »war es das richtige Wort?«, nicht »klang es gut?«. Funktioniert offline."
+        : "Dieser Browser kann nicht zuhören – auf iPad und iPhone ist das häufig so. Die Kontrolle weicht automatisch auf Stufe 2 aus.",
+    2: "Deine Aussprache wird aufgenommen. Du hörst dich neben dem Vorbild und kannst die Aufnahme sichern; zu Hause werten wir sie gemeinsam mit einer KI aus. Funktioniert offline, die Auswertung braucht Internet.",
+    3: "Vorbereitet, aber noch nicht angeschlossen: ein professioneller Bewertungsdienst würde jeden Laut einzeln benoten. Dafür braucht es ein kostenpflichtiges Konto – die Zugangsdaten tragen wir zu Hause ein, nicht in eine App, die im Bus läuft."
+  };
+  el("aussprache-hinweis").textContent = texte[e.aussprachestufe];
+  zeigeStimmenHinweis();
+}
+
+el("knopf-name").addEventListener("click", function () {
+  const neu = el("anzeigename").value.trim();
+  if (!neu) return;
+  daten.anzeigename = neu;
+  sichere();
+  el("benutzer-name").textContent = neu;
+  el("daten-hinweis").textContent = "Angezeigter Name auf diesem Gerät: " + neu + ".";
+});
+
+el("knopf-ziel").addEventListener("click", function () {
+  const einh = Math.max(1, Math.min(14, parseInt(el("ziel-einheiten").value, 10) || 3));
+  const min = Math.max(5, Math.min(120, parseInt(el("ziel-minuten").value, 10) || 20));
+  daten.einstellungen.wochenziel = { einheiten: einh, minuten: min };
+  sichere();
+  zeichneEinstellungen();
+  el("daten-hinweis").textContent = "Neues Pensum: " + einh + " × " + min + " Minuten pro Woche.";
+});
+
+function zeigeStimmenHinweis() {
+  const ziel = el("stimmen-hinweis");
+  if (!ziel || !daten) return;
+  if (!("speechSynthesis" in window)) {
+    ziel.textContent = "Dieser Browser kann nicht vorlesen – die Sprachausgabe bleibt hier ohne Wirkung.";
+    return;
+  }
+  const fehlend = daten.sprachen.filter(function (sp) {
+    const code = VORLESE_CODE[sp].slice(0, 2);
+    return !stimmen.some(function (v) { return v.lang.slice(0, 2) === code; });
+  });
+  ziel.textContent = fehlend.length
+    ? "Für " + fehlend.map(function (s) { return SPRACHNAMEN[s]; }).join(" und ") +
+      " ist auf diesem Gerät keine Stimme installiert – dort wird die Lösung nur angezeigt."
+    : "Stimmen für " + daten.sprachen.map(function (s) { return SPRACHNAMEN[s]; }).join(" und ") + " sind verfügbar.";
+}
+
+/* ------------------------- Export und Import ---------------------------- */
+let downloads = null;
+if (window.claude && typeof window.claude.use === "function") {
+  window.claude.use("downloads").then(function (d) { downloads = d; }).catch(function () { downloads = null; });
+}
+
+/* Ein Weg für alle Dateien - Datenexport wie Sprachaufnahme. */
+function sichereDatei(name, inhalt, hinweisFeld) {
+  if (downloads) {
+    downloads.save({ filename: name, data: inhalt }).then(function () {
+      hinweisFeld.textContent = "Gespeichert als " + name + ".";
+    }).catch(function (fehler) {
+      hinweisFeld.textContent = (fehler && fehler.code === "declined")
+        ? "Speichern abgebrochen."
+        : "Speichern hat hier nicht geklappt.";
+      if (typeof inhalt === "string") zeigeRohdaten(inhalt);
+    });
+    return;
+  }
+  /* Außerhalb des Artifact-Fensters (etwa als installierte App) geht der
+     normale Weg über einen Download-Verweis. */
+  try {
+    const url = URL.createObjectURL(typeof inhalt === "string" ? new Blob([inhalt], { type: "application/json" }) : inhalt);
+    const a = document.createElement("a");
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    hinweisFeld.textContent = "Gespeichert als " + name + ".";
+  } catch (f) {
+    hinweisFeld.textContent = "Hier lassen sich keine Dateien speichern.";
+    if (typeof inhalt === "string") zeigeRohdaten(inhalt);
+  }
+}
+
+el("knopf-export").addEventListener("click", function () {
+  sichereDatei("vokabelkasten-" + kurzname(daten.anzeigename || daten.benutzer) + "-" + heute() + ".json",
+    JSON.stringify(daten, null, 2), el("daten-hinweis"));
+});
+
+function zeigeRohdaten(inhalt) {
+  let feld = el("rohdaten");
+  if (!feld) {
+    feld = document.createElement("textarea");
+    feld.id = "rohdaten";
+    feld.rows = 8;
+    feld.style.marginTop = "10px";
+    feld.style.fontFamily = "var(--schrift-zahl)";
+    feld.style.fontSize = ".75rem";
+    el("daten-hinweis").parentNode.appendChild(feld);
+  }
+  feld.value = inhalt;
+  feld.select();
+}
+
+el("knopf-import").addEventListener("click", function () { el("datei-import").click(); });
+
+el("datei-import").addEventListener("change", function (ev) {
+  const datei = ev.target.files && ev.target.files[0];
+  if (!datei) return;
+  const leser = new FileReader();
+  leser.onload = function () {
+    try {
+      const eingelesen = JSON.parse(leser.result);
+      if (!Array.isArray(eingelesen.vokabeln)) throw new Error("keine Vokabeln");
+      daten = ruesteNach(eingelesen, daten.benutzer);
+      sichere();
+      fuelleSprachwahl();
+      el("daten-hinweis").textContent = "Eingelesen: " + daten.vokabeln.length + " Vokabeln und " +
+        daten.journal.length + " Journaleinträge für " + daten.benutzer + ".";
+      zeichneKasten();
+    } catch (fehler) {
+      el("daten-hinweis").textContent = "Diese Datei konnte ich nicht lesen. Erwartet wird eine Export-Datei des Vokabelkastens.";
+    }
+  };
+  leser.readAsText(datei);
+  ev.target.value = "";
+});
+
+/* ---------------------------- Startvokabeln ----------------------------- */
+el("knopf-demo-weg").addEventListener("click", function () {
+  const vorher = daten.vokabeln.length;
+  daten.vokabeln = daten.vokabeln.filter(function (v) { return !v.start; });
+  sichere();
+  zeichneKasten();
+  el("daten-hinweis").textContent = (vorher - daten.vokabeln.length) + " Startvokabeln entfernt.";
+});
+
+el("knopf-demo-her").addEventListener("click", function () {
+  if (daten.vokabeln.some(function (v) { return v.start; })) {
+    el("daten-hinweis").textContent = "Die Startvokabeln liegen schon im Kasten.";
+    return;
+  }
+  daten.vokabeln = daten.vokabeln.concat(startVokabeln(daten.sprachen));
+  sichere();
+  zeichneKasten();
+  el("daten-hinweis").textContent = "Startvokabeln zurückgeholt.";
+});
+
+/* ------------------- Offline-Betrieb (nur außerhalb des Artifacts) ------- */
+/* Als installierte App auf GitHub Pages sorgt der Service Worker dafür,
+   dass der Kasten auch ohne Netz startet. Im Artifact-Fenster ist das
+   nicht erlaubt - der Versuch scheitert dort still. */
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function () { /* hier nicht möglich */ });
+  });
+}
+
+/* -------------------------------- Start --------------------------------- */
+zeigeStart();
+</script>
+
+</body>
+</html>
