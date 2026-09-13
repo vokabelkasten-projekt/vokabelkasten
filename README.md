@@ -19,12 +19,20 @@ vergleichen. Die fünf Fächer stehen deshalb sichtbar über jeder Übung.
 
 ## Was er sonst kann
 
+- **Ein Konto in einer Minute:** Name eintragen, Sprachen ankreuzen, fertig. Mehrere
+  Konten auf demselben Gerät bleiben vollständig getrennt.
+- **Eine Sprache nach der anderen.** Kein Mischbetrieb: Englisch und Italienisch im
+  Wechsel abzufragen ist Gedächtnistraining, aber kein Hausaufgabenersatz.
+- **Hausaufgabenliste je Sprache** – was heute fällig ist, wie lange es dauert, welche
+  Wörter hängen.
 - Abfrage in beide Richtungen, mit Nachsicht bei Groß- und Kleinschreibung, Akzenten und
   Artikeln. Bei einem Tippfehler entscheidest du selbst, ob er zählt.
 - Lösung als Text, als Sprache oder beides – umschaltbar.
 - Aussprache üben: der Browser hört zu, oder du nimmst dich auf und vergleichst dich mit
   dem Vorbild.
 - Eselsbrücken für Vokabeln, die sich hartnäckig weigern.
+- Vokabeln aus dem Schulbuch übernehmen: Seite fotografieren, Wortliste einlesen,
+  vor dem Übernehmen Zeile für Zeile prüfen.
 - Ein **„Ich widerspreche"**-Knopf: Wenn das Programm dir unrecht tut, sagst du es ihm,
   begründest es kurz, und die Bewertung dreht sich um. Ein Programm ist eine Meinung,
   keine Instanz.
@@ -39,9 +47,14 @@ wie eine normale App und braucht kein Netz mehr.
 ## Deine Daten
 
 Alles, was du lernst, bleibt in deinem Browser auf deinem Gerät. Nichts wird hochgeladen,
-nichts wird ausgewertet, es gibt keinen Server. Über *Einstellungen → Daten exportieren*
-bekommst du eine Datei, mit der du auf ein anderes Gerät umziehst.
+nichts wird ausgewertet, es gibt keinen Server. Auch dein Name entsteht erst beim Anlegen
+des Kontos und steht nirgends im Programm.
 
-Auch dein Name gehört dir: Die beiden Konten heißen hier neutral „Konto A" und „Konto B".
-Unter *Einstellungen → Dein Name auf diesem Gerät* trägst du ein, wie du genannt werden
-willst – der Name bleibt auf deinem Gerät.
+Das hat eine Kehrseite: **Ist das Gerät weg, sind die Daten weg.** Deshalb gibt es unter
+*Einstellungen → Sicherung* einen Knopf, der eine Datei erzeugt – schick sie dir selbst
+per Mail oder leg sie in deine Cloud. Auf einem neuen Gerät liest du sie wieder ein und
+entscheidest dabei, ob sie alles ersetzen oder nur Fehlendes ergänzen soll.
+
+Automatisch geht das nicht, und das ist Absicht: Ein Browser darf ohne Zutun keine Datei
+verschicken, und eine App, die es trotzdem könnte, müsste die Daten irgendwohin schicken.
+Genau das soll sie nicht.
