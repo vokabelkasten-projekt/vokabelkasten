@@ -388,6 +388,66 @@ code {
 .waehler .initial { width: 44px; height: 44px; font-size: 1.15rem; }
 .waehler .nam { font-weight: 700; font-size: 1.0625rem; }
 .waehler .det { font-family: var(--schrift-zahl); font-size: .688rem; color: var(--tinte-3); }
+.waehler .neues-konto { border-style: dashed; box-shadow: none; }
+.waehler .neues-konto .initial { background: none; border: 2px dashed var(--linie-2); color: var(--tinte-3); font-size: 1.4rem; font-weight: 400; }
+
+/* Sprachen ankreuzen beim Anlegen eines Kontos */
+.sprachwahl { display: flex; flex-direction: column; gap: 7px; margin-top: 7px; }
+.sprachknopf {
+  display: flex; align-items: center; gap: 9px; cursor: pointer;
+  font-size: .9375rem; color: var(--tinte);
+}
+.sprachknopf input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--tinte); flex: none; }
+
+/* Sprachleiste: welche Sprache wird gerade geübt? */
+.sprachleiste { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.sprachleiste button {
+  appearance: none; cursor: pointer; font: inherit;
+  display: flex; align-items: center; gap: 7px;
+  background: var(--karte); border: 1px solid var(--linie);
+  border-radius: 9px; padding: 7px 13px 7px 9px; color: var(--tinte-2);
+}
+.sprachleiste button:hover { border-color: var(--linie-2); }
+.sprachleiste button[aria-pressed="true"] { border-color: var(--tinte); color: var(--tinte); font-weight: 600; }
+.sprachleiste .faellig {
+  font-family: var(--schrift-zahl); font-size: .688rem;
+  background: var(--tinte); color: var(--tinte-auf);
+  border-radius: 999px; padding: 1px 6px;
+}
+.sprachleiste button[aria-pressed="false"] .faellig { background: var(--linie-2); color: var(--tinte); }
+
+/* Hausaufgabenliste je Sprache */
+.aufgabe {
+  display: grid; grid-template-columns: 22px 1fr auto; gap: 11px;
+  align-items: start; padding: 11px 0; border-top: 1px solid var(--linie);
+}
+.aufgabe:first-child { border-top: none; }
+.aufgabe .haken {
+  width: 20px; height: 20px; border-radius: 5px; border: 2px solid var(--linie-2);
+  display: grid; place-items: center; font-size: .75rem; margin-top: 1px;
+}
+.aufgabe.erledigt .haken { background: var(--richtig); border-color: var(--richtig); color: var(--karte); }
+.aufgabe.erledigt .titel { text-decoration: line-through; color: var(--tinte-3); }
+.aufgabe .titel { font-weight: 600; font-size: .9375rem; }
+.fachblock { margin-top: 20px; }
+.fachblock:first-child { margin-top: 0; }
+.fachkopf { display: flex; align-items: center; gap: 9px; margin-bottom: 4px; }
+.fachkopf h3 { font-size: 1.05rem; }
+
+/* Sicherungsstand und Erinnerung */
+.sicherungsbalken {
+  border-radius: 9px; padding: 11px 14px; font-size: .9375rem;
+  border: 1px solid var(--linie); background: var(--karte-2);
+}
+.sicherungsbalken.warnen { border-color: var(--fast); background: var(--fast-bg); }
+.sicherungsbalken.ruhig { border-color: var(--linie); }
+.erinnerung {
+  display: flex; align-items: center; gap: 11px; flex-wrap: wrap;
+  border: 1px solid var(--fast); background: var(--fast-bg);
+  border-radius: 10px; padding: 12px 15px; margin-bottom: 16px;
+  font-size: .9375rem;
+}
+.erinnerung > span:first-child { flex: 1 1 260px; }
 
 .werkzeugtipp {
   position: fixed; background: var(--tinte); color: var(--tinte-auf);
@@ -409,6 +469,7 @@ code {
     <h1>Vokabelkasten</h1>
     <p class="unterzeile">Ein Karteikasten mit fünf Fächern. Was du kannst, wandert nach hinten und kommt seltener dran. Was hakt, kommt zurück nach vorn.</p>
     <div class="waehler" id="waehler"></div>
+    <div id="kontoanlage" hidden></div>
   </section>
 
   <!-- ========================== ANWENDUNG ========================== -->
@@ -418,7 +479,7 @@ code {
       <div class="abstand"></div>
       <button class="benutzer-knopf" id="knopf-benutzer" title="Benutzer wechseln">
         <span class="initial" id="benutzer-initial">F</span>
-        <span id="benutzer-name">Konto A</span>
+        <span id="benutzer-name"></span>
       </button>
     </header>
 
@@ -432,6 +493,7 @@ code {
 
     <!-- ----------------------------- ÜBEN ---------------------------- -->
     <section id="a-ueben">
+      <div class="sprachleiste" id="sprachleiste"></div>
       <div class="reihe" id="uebungsart" style="margin-bottom:16px"></div>
       <div class="kasten" id="kasten"></div>
       <div id="uebungsbereich"></div>
@@ -511,7 +573,7 @@ to tackle = angehen, in Angriff nehmen"></textarea>
       <div class="tafel stapel">
         <div>
           <h2>Heute dran</h2>
-          <p class="hinweis">Dein persönlicher Lernplan – nicht ausgedacht, sondern aus deinem Karteikasten und deinem Journal abgeleitet.</p>
+          <p class="hinweis">Für jede Sprache eine eigene Liste – wie ein Hausaufgabenheft. Nichts davon ist ausgedacht: Jede Aufgabe stammt aus deinem Karteikasten und deinem Journal, du kannst sie nachrechnen.</p>
         </div>
         <div id="heute-plan"></div>
       </div>
@@ -603,12 +665,22 @@ to tackle = angehen, in Angriff nehmen"></textarea>
 
       <div class="tafel stapel">
         <div>
-          <h2>Daten sichern und übertragen</h2>
-          <p class="hinweis">Der Kasten liegt in diesem Browser. Zum Wechseln auf ein anderes Gerät – und für unsere gemeinsamen Auswertungen zu Hause – exportierst du ihn als Datei.</p>
+          <h2>Deine Sprachen</h2>
+          <p class="hinweis">Hier kommt eine Sprache dazu oder fällt weg. Abwählen löscht nichts – die Vokabeln ruhen nur, bis du die Sprache wieder anhakst.</p>
         </div>
+        <div class="sprachwahl" id="sprachen-verwalten"></div>
+        <p class="hinweis" id="sprachen-hinweis"></p>
+      </div>
+
+      <div class="tafel stapel">
+        <div>
+          <h2>Sicherung</h2>
+          <p class="hinweis">Dein Kasten liegt <strong>nur</strong> in diesem Browser. Handy verloren, Browserdaten gelöscht, neues Gerät – ohne Sicherung ist alles weg. Eine Sicherung ist eine Datei; schick sie dir selbst per Mail oder leg sie in deine Cloud.</p>
+        </div>
+        <div id="sicherungsstand"></div>
         <div class="reihe">
-          <button class="tat" id="knopf-export">Daten exportieren</button>
-          <button class="tat leise" id="knopf-import">Daten einlesen</button>
+          <button class="tat" id="knopf-sichern">Sicherung erstellen</button>
+          <button class="tat leise" id="knopf-import">Sicherung einlesen</button>
           <input type="file" id="datei-import" accept=".json,application/json" hidden>
         </div>
         <p class="hinweis" id="daten-hinweis"></p>
@@ -625,8 +697,19 @@ to tackle = angehen, in Angriff nehmen"></textarea>
         </div>
       </div>
 
+      <div class="tafel stapel">
+        <div>
+          <h2>Konto löschen</h2>
+          <p class="hinweis">Entfernt dieses Konto samt allen Vokabeln, dem Journal und dem Tagebuch von diesem Gerät. Das lässt sich nicht rückgängig machen – sichere vorher.</p>
+        </div>
+        <div class="reihe">
+          <button class="tat leise" id="knopf-konto-loeschen">Konto von diesem Gerät löschen</button>
+          <span class="hinweis" id="loesch-hinweis"></span>
+        </div>
+      </div>
+
       <p class="hinweis" style="text-align:center">
-        Stufe 2 – Als Nächstes: Foto&nbsp;/&nbsp;OCR aus Green&nbsp;Line und Découvertes, Aussprachestufe 2 und 3, Kalender und E-Mail-Erinnerungen.
+        Als Nächstes: Aussprachestufe 3, Kalender und E-Mail-Erinnerungen.
       </p>
     </section>
   </div>
@@ -638,22 +721,52 @@ to tackle = angehen, in Angriff nehmen"></textarea>
    Jeder Benutzer hat seinen eigenen Datenraum im Speicher des Browsers.
    ========================================================================= */
 
-/* Diese Liste tauscht das Bauskript für die öffentliche Fassung aus. Den
-   angezeigten Namen setzt jeder auf seinem Gerät selbst - er bleibt dort und
-   steht nirgends im Programmtext. */
-const BENUTZER = [
-  { name: "Konto A", kuerzel: "A", sprachen: ["en", "it"] },
-  { name: "Konto B", kuerzel: "B", sprachen: ["en", "fr"] }
-];
+/* Wer die App benutzt, stand früher fest im Programm. Jetzt legt jeder sein
+   Konto selbst an und wählt seine Sprachen - deshalb steht hier kein Name
+   mehr, und die Namen entstehen erst auf dem Gerät des Benutzers. */
 
 const SPRACHNAMEN = { en: "Englisch", fr: "Französisch", it: "Italienisch" };
 const VORLESE_CODE = { en: "en-GB", fr: "fr-FR", it: "it-IT" };
-/* Die Schulbücher. Für Italienisch steht das Buch noch nicht fest. */
+/* Vorschläge für das Schulbuch - jeder kann beim Anlegen etwas anderes eintragen. */
 const BUCH = { en: "Green Line", fr: "Découvertes", it: "" };
+
+const KONTENSCHLUESSEL = "vt.konten.v1";
 
 let benutzer = null;
 let daten = null;
 let aktuelleFrage = null;
+
+/* ---- Das Kontoverzeichnis -----------------------------------------------
+   Eine schlichte Liste { name, sprachen } im Speicher des Browsers. Sie sagt
+   nur, WELCHE Konten es gibt; die Lerndaten jedes Kontos liegen getrennt
+   davon unter einem eigenen Schlüssel. */
+function ladeKonten() {
+  try {
+    const roh = localStorage.getItem(KONTENSCHLUESSEL);
+    if (roh) {
+      const liste = JSON.parse(roh);
+      if (Array.isArray(liste)) return liste.filter(function (k) { return k && k.name; });
+    }
+  } catch (e) { /* kein Speicher - dann fangen wir mit einer leeren Liste an */ }
+  return [];
+}
+
+function sichereKonten(liste) {
+  try { localStorage.setItem(KONTENSCHLUESSEL, JSON.stringify(liste)); }
+  catch (e) { /* Speicher gesperrt - die Sitzung läuft trotzdem weiter */ }
+}
+
+function legeKontoAn(name, sprachen) {
+  const konten = ladeKonten();
+  konten.push({ name: name, sprachen: sprachen.slice() });
+  sichereKonten(konten);
+  return konten;
+}
+
+function loescheKonto(name) {
+  sichereKonten(ladeKonten().filter(function (k) { return k.name !== name; }));
+  try { localStorage.removeItem(schluessel(name)); } catch (e) { /* egal */ }
+}
 
 function schluessel(name) { return "vt." + kurzname(name) + ".v1"; }
 function kurzname(name) { return String(name).toLowerCase().replace(/[^a-z0-9]+/g, "-"); }
@@ -676,39 +789,46 @@ function wochenStart(datum) {
 function neueId() { return Math.random().toString(36).slice(2, 10); }
 
 function benutzerInfo(name) {
-  return BENUTZER.find(function (b) { return b.name === name; }) || BENUTZER[0];
+  return ladeKonten().find(function (b) { return b.name === name; }) || { name: name, sprachen: ["en"] };
 }
 
-function leererDatenraum(name) {
+function leererDatenraum(name, sprachen, mitStartvokabeln) {
+  const sp = (sprachen && sprachen.length) ? sprachen.slice() : benutzerInfo(name).sprachen.slice();
   return {
-    version: 2,
+    version: 3,
     benutzer: name,
     anzeigename: name,
-    sprachen: benutzerInfo(name).sprachen.slice(),
+    sprachen: sp,
     einstellungen: {
       ausgabemodus: "beides",
       richtung: "gemischt",
       aussprachestufe: 1,
-      wochenziel: { einheiten: 3, minuten: 20 }
+      wochenziel: { einheiten: 3, minuten: 20 },
+      aktiveSprache: sp[0]          // es wird immer nur EINE Sprache abgefragt
     },
-    vokabeln: startVokabeln(benutzerInfo(name).sprachen),
+    vokabeln: mitStartvokabeln === false ? [] : startVokabeln(sp),
     journal: [],
-    tagebuch: []          // erzählende Einträge - eigene und von der KI geschriebene
+    tagebuch: [],         // erzählende Einträge - eigene und von der KI geschriebene
+    letzteSicherung: null // Zeitpunkt der letzten Datensicherung
   };
 }
 
 /* Ältere Datenstände sanft nachrüsten, statt sie wegzuwerfen. */
 function ruesteNach(d, name) {
-  d.version = 2;
+  d.version = 3;
   d.benutzer = name;
   if (!d.anzeigename) d.anzeigename = name;
-  if (!d.sprachen) d.sprachen = benutzerInfo(name).sprachen.slice();
+  if (!Array.isArray(d.sprachen) || !d.sprachen.length) d.sprachen = benutzerInfo(name).sprachen.slice();
   if (!d.einstellungen) d.einstellungen = {};
   const e = d.einstellungen;
   if (!e.ausgabemodus) e.ausgabemodus = "beides";
   if (!e.richtung) e.richtung = "gemischt";
   if (!e.aussprachestufe) e.aussprachestufe = 1;
   if (!e.wochenziel) e.wochenziel = { einheiten: 3, minuten: 20 };
+  /* Früher wurden alle Sprachen gemischt abgefragt. Jetzt gilt immer genau
+     eine - beim Nachrüsten nehmen wir die erste. */
+  if (!e.aktiveSprache || d.sprachen.indexOf(e.aktiveSprache) < 0) e.aktiveSprache = d.sprachen[0];
+  if (d.letzteSicherung === undefined) d.letzteSicherung = null;
   if (!Array.isArray(d.vokabeln)) d.vokabeln = [];
   if (!Array.isArray(d.journal)) d.journal = [];
   if (!Array.isArray(d.tagebuch)) d.tagebuch = [];
@@ -959,9 +1079,24 @@ function verbuche(vokabel, korrekt) {
   return vokabel.fach;
 }
 
-function faellige() {
+/* Es wird immer nur EINE Sprache geübt. Englisch und Italienisch im Wechsel
+   abzufragen ist Gedächtnistraining, aber kein Hausaufgabenersatz - und der
+   Kopf muss bei jedem Sprachwechsel neu umschalten. Welche Sprache gerade
+   dran ist, steht in den Einstellungen und wird über die Sprachleiste
+   gewechselt. */
+function aktiveSprache() {
+  const a = daten.einstellungen.aktiveSprache;
+  return (a && daten.sprachen.indexOf(a) >= 0) ? a : daten.sprachen[0];
+}
+
+function vokabelnDerSprache(sprache) {
+  const sp = sprache || aktiveSprache();
+  return daten.vokabeln.filter(function (v) { return v.sprache === sp; });
+}
+
+function faellige(sprache) {
   const h = heute();
-  return daten.vokabeln.filter(function (v) { return v.faelligAm <= h; });
+  return vokabelnDerSprache(sprache).filter(function (v) { return v.faelligAm <= h; });
 }
 
 /* Ein hartnäckiger Fall: drei Fehler oder mehr. Für die kommen die
@@ -1073,19 +1208,22 @@ function pruefeSatz(satz, vokabel) {
 let uebungsart = "faellig";
 let wortfeldWahl = "";
 
-function wortfelder() {
+/* Wortfelder immer nur aus der Sprache, die gerade dran ist. */
+function wortfelder(sprache) {
   const felder = [];
-  daten.vokabeln.forEach(function (v) { if (v.wortfeld && felder.indexOf(v.wortfeld) < 0) felder.push(v.wortfeld); });
+  vokabelnDerSprache(sprache).forEach(function (v) {
+    if (v.wortfeld && felder.indexOf(v.wortfeld) < 0) felder.push(v.wortfeld);
+  });
   return felder.sort();
 }
 
 function uebungsvorrat() {
   if (uebungsart === "wortfeld") {
-    return daten.vokabeln.filter(function (v) { return v.wortfeld === wortfeldWahl; });
+    return vokabelnDerSprache().filter(function (v) { return v.wortfeld === wortfeldWahl; });
   }
   if (uebungsart === "satz") {
     /* Ein Beispielsatz lohnt sich erst, wenn das Wort schon einmal saß. */
-    return daten.vokabeln.filter(function (v) { return v.statistik.richtig > 0; });
+    return vokabelnDerSprache().filter(function (v) { return v.statistik.richtig > 0; });
   }
   return faellige();
 }
@@ -1270,10 +1408,20 @@ function wocheEinheiten(start) {
    und legen sie als Einträge mit quelle "ki" daneben.
    ========================================================================= */
 
-function zahlwort(n) {
-  const w = ["kein", "ein", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun", "zehn"];
-  return n <= 10 ? w[n] : String(n);
+/* Zahlwörter mit Fall und Geschlecht. Ohne das steht im Tagebuch "an ein Tag"
+   und "mit ein Fehler" - Deutsch beugt die Eins, andere Zahlen nicht. Der
+   zweite Wert sagt, welche Form gebraucht wird:
+     "m"  männlich im Dativ  -> einem Tag, einem Fehler
+     "f"  weiblich im Dativ  -> einer Einheit
+     sonst                   -> eine Einheit, ein Tag (Grundform) */
+function zahlwort(n, form) {
+  const w = ["keine", "ein", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun", "zehn"];
+  if (n === 1) return form === "m" ? "einem" : (form === "f" ? "einer" : "ein");
+  return (n >= 0 && n <= 10) ? w[n] : String(n);
 }
+
+/* Ein Wort in Ein- oder Mehrzahl, passend zur Zahl davor. */
+function form(n, einzahl, mehrzahl) { return n === 1 ? einzahl : mehrzahl; }
 
 function wochenrueckblick(start) {
   const einheiten = wocheEinheiten(start);
@@ -1298,9 +1446,9 @@ function wochenrueckblick(start) {
   const schlimmste = Object.keys(fehler).sort(function (a, b) { return fehler[b] - fehler[a]; })[0];
 
   const saetze = [];
-  saetze.push("Du hast an " + zahlwort(tage) + (tage === 1 ? " Tag" : " Tagen") +
-    " geübt, in " + zahlwort(einheiten.length) + (einheiten.length === 1 ? " Einheit" : " Einheiten") +
-    " und insgesamt " + minuten + " Minuten.");
+  saetze.push("Du hast an " + zahlwort(tage, "m") + form(tage, " Tag", " Tagen") +
+    " geübt, in " + zahlwort(einheiten.length, "f") + form(einheiten.length, " Einheit", " Einheiten") +
+    " und insgesamt " + minuten + form(minuten, " Minute", " Minuten") + ".");
 
   const quote = eintraege.length ? Math.round(richtig / eintraege.length * 100) : 0;
   saetze.push("Von " + eintraege.length + " Antworten waren " + richtig + " richtig – das sind " + quote + " Prozent.");
@@ -1316,7 +1464,7 @@ function wochenrueckblick(start) {
 
   if (schlimmste) {
     saetze.push("Am meisten Ärger machte dir »" + schlimmste + "« mit " +
-      zahlwort(fehler[schlimmste]) + (fehler[schlimmste] === 1 ? " Fehler" : " Fehlern") + ".");
+      zahlwort(fehler[schlimmste], "m") + form(fehler[schlimmste], " Fehler", " Fehlern") + ".");
   }
   return saetze.join(" ");
 }
@@ -1335,19 +1483,89 @@ function esc(t) {
 function zeigeStart() {
   el("s-start").hidden = false;
   el("app").hidden = true;
+  const konten = ladeKonten();
   const w = el("waehler");
   w.innerHTML = "";
-  BENUTZER.forEach(function (info) {
+
+  konten.forEach(function (info) {
     const d = lade(info.name);
     const anz = d.anzeigename || info.name;
     const b = document.createElement("button");
     b.innerHTML =
-      '<span class="initial">' + esc(info.kuerzel || anz[0]) + "</span>" +
+      '<span class="initial">' + esc(anz.charAt(0).toUpperCase()) + "</span>" +
       '<span class="nam">' + esc(anz) + "</span>" +
       '<span class="det">' + info.sprachen.map(function (s) { return s.toUpperCase(); }).join(" · ") + "</span>" +
       '<span class="det">' + d.vokabeln.length + " Vokabeln · " + d.journal.length + " Übungen</span>";
     b.addEventListener("click", function () { melde(info.name); });
     w.appendChild(b);
+  });
+
+  const neu = document.createElement("button");
+  neu.id = "knopf-neues-konto";
+  neu.className = "neues-konto";
+  neu.innerHTML = '<span class="initial">+</span><span class="nam">Neues Konto</span>' +
+                  '<span class="det">' + (konten.length ? "noch jemand" : "hier anfangen") + "</span>";
+  neu.addEventListener("click", zeigeKontoanlage);
+  w.appendChild(neu);
+
+  el("kontoanlage").hidden = konten.length > 0;
+  if (!konten.length) zeigeKontoanlage();
+  else el("kontoanlage").innerHTML = "";
+}
+
+/* ---- Konto anlegen ----------------------------------------------------- */
+function zeigeKontoanlage() {
+  const feld = el("kontoanlage");
+  feld.hidden = false;
+  feld.innerHTML =
+    '<div class="tafel stapel" style="text-align:left;max-width:460px;margin:26px auto 0">' +
+      "<div><h2>Neues Konto</h2>" +
+      '<p class="hinweis">Dein Name bleibt auf diesem Gerät und wird nirgendwohin übertragen.</p></div>' +
+      /* flex:none, weil label.feld sonst in der senkrechten Anordnung auf
+         seine flex-basis von 150px aufgeblasen wird - das reißt eine Lücke. */
+      '<label class="feld" style="flex:none"><span>Wie heißt du?</span>' +
+        '<input type="text" id="konto-name" placeholder="Vorname genügt" autocomplete="off" maxlength="24"></label>' +
+      "<div>" +
+        '<span style="font-size:.75rem;font-weight:600;color:var(--tinte-2)">Welche Sprachen lernst du?</span>' +
+        '<div class="sprachwahl" id="konto-sprachen">' +
+          Object.keys(SPRACHNAMEN).map(function (sp) {
+            return '<label class="sprachknopf"><input type="checkbox" value="' + sp + '">' +
+              '<span class="chip ' + sp + '">' + sp.toUpperCase() + "</span>" + SPRACHNAMEN[sp] + "</label>";
+          }).join("") +
+        "</div>" +
+      "</div>" +
+      '<label class="sprachknopf" style="align-self:flex-start">' +
+        '<input type="checkbox" id="konto-startvokabeln" checked>' +
+        "<span>Zum Ausprobieren 40 Vokabeln je Sprache mitgeben</span></label>" +
+      '<div class="reihe">' +
+        '<button class="tat" id="knopf-konto-anlegen">Konto anlegen</button>' +
+        '<span class="hinweis" id="konto-hinweis"></span>' +
+      "</div>" +
+    "</div>";
+
+  el("konto-name").focus();
+  el("konto-name").addEventListener("keydown", function (ev) {
+    if (ev.key === "Enter") { ev.preventDefault(); el("knopf-konto-anlegen").click(); }
+  });
+
+  el("knopf-konto-anlegen").addEventListener("click", function () {
+    const name = el("konto-name").value.trim();
+    const sprachen = [];
+    feld.querySelectorAll('#konto-sprachen input:checked').forEach(function (k) { sprachen.push(k.value); });
+    const hinweis = el("konto-hinweis");
+
+    if (!name) { hinweis.textContent = "Bitte trag einen Namen ein."; return; }
+    if (!sprachen.length) { hinweis.textContent = "Wähle mindestens eine Sprache."; return; }
+    if (ladeKonten().some(function (k) { return kurzname(k.name) === kurzname(name); })) {
+      hinweis.textContent = "Ein Konto mit diesem Namen gibt es schon.";
+      return;
+    }
+
+    legeKontoAn(name, sprachen);
+    daten = leererDatenraum(name, sprachen, el("konto-startvokabeln").checked);
+    benutzer = name;
+    sichere();
+    melde(name);
   });
 }
 
@@ -1356,10 +1574,13 @@ function melde(name) {
   daten = lade(name);
   el("s-start").hidden = true;
   el("app").hidden = false;
-  el("benutzer-initial").textContent = benutzerInfo(name).kuerzel || name[0];
-  el("benutzer-name").textContent = daten.anzeigename || name;
+  const anz = daten.anzeigename || name;
+  el("benutzer-initial").textContent = anz.charAt(0).toUpperCase();
+  el("benutzer-name").textContent = anz;
   fuelleSprachwahl();
+  zeichneSprachleiste();
   wechsleAnsicht("ueben");
+  erinnereAnSicherung();
 }
 
 el("knopf-benutzer").addEventListener("click", function () {
@@ -1385,7 +1606,7 @@ function wechsleAnsicht(name) {
   document.querySelectorAll(".reiter button").forEach(function (b) {
     b.setAttribute("aria-selected", String(b.dataset.ansicht === name));
   });
-  if (name === "ueben") { zeichneUebungsart(); zeichneUeben(); }
+  if (name === "ueben") { zeichneSprachleiste(); zeichneUebungsart(); zeichneUeben(); }
   if (name === "vokabeln") { fuelleWortfeldfilter(); zeichneVokabeln(); }
   if (name === "tagebuch") zeichneTagebuch();
   if (name === "statistik") zeichneStatistik();
@@ -1399,8 +1620,10 @@ document.querySelectorAll(".reiter button").forEach(function (b) {
 
 /* --------------------------- Karteikastenleiste ------------------------- */
 function zeichneKasten() {
+  /* Der Kasten zeigt die Sprache, die gerade dran ist - sonst stünde dort
+     eine Zahl, die zu den Vokabeln auf dem Bildschirm nicht passt. */
   const zaehler = [0, 0, 0, 0, 0];
-  daten.vokabeln.forEach(function (v) { zaehler[v.fach - 1]++; });
+  vokabelnDerSprache().forEach(function (v) { zaehler[v.fach - 1]++; });
   el("kasten").innerHTML = zaehler.map(function (n, i) {
     return '<div class="fach" data-fach="' + (i + 1) + '">' +
              '<div class="balken"></div><span class="wert">' + n + "</span>" +
@@ -1417,6 +1640,35 @@ function hebeFachHervor(fach) {
 }
 
 /* ------------------------------ Üben ------------------------------------ */
+/* Die Sprachleiste: welche Sprache ist gerade dran? Bei nur einer Sprache
+   gäbe es nichts zu wählen - dann bleibt die Leiste weg. */
+function zeichneSprachleiste() {
+  const leiste = el("sprachleiste");
+  if (daten.sprachen.length < 2) { leiste.innerHTML = ""; leiste.hidden = true; return; }
+  leiste.hidden = false;
+  const jetzt = aktiveSprache();
+  leiste.innerHTML = daten.sprachen.map(function (sp) {
+    const offen = faellige(sp).length;
+    return '<button data-sprache="' + sp + '" aria-pressed="' + (sp === jetzt) + '">' +
+      '<span class="chip ' + sp + '">' + sp.toUpperCase() + "</span>" +
+      SPRACHNAMEN[sp] +
+      (offen ? '<span class="faellig">' + offen + "</span>" : "") +
+      "</button>";
+  }).join("");
+
+  leiste.querySelectorAll("[data-sprache]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      daten.einstellungen.aktiveSprache = b.dataset.sprache;
+      wortfeldWahl = "";
+      sichere();
+      zeichneSprachleiste();
+      zeichneUebungsart();
+      zeichneUeben();
+      zeichneKasten();
+    });
+  });
+}
+
 /* Die Leiste über dem Karteikasten: womit wird gerade geübt? */
 function zeichneUebungsart() {
   const felder = wortfelder();
@@ -2165,59 +2417,114 @@ el('foto-datei').addEventListener('change', function (ev) {
   ev.target.value = '';
 });
 
-/* --------------------------- Lernplan für heute -------------------------
-   Der Plan wird nicht erfunden, sondern abgeleitet: aus dem Karteikasten
-   (was ist fällig), aus dem Journal (was macht Ärger) und aus dem Bestand
-   (wo fehlt noch eine Eselsbrücke oder ein eigener Satz). So kann man ihn
-   nachrechnen - genau das sollen die Schüler auch tun.
-   ------------------------------------------------------------------------ */
-function zeichneHeutePlan() {
-  const offen = faellige();
-  const proSprache = {};
-  offen.forEach(function (v) { proSprache[v.sprache] = (proSprache[v.sprache] || 0) + 1; });
+/* --------------------- Hausaufgaben, je Sprache getrennt ----------------
+   Kein gemischter Stapel, sondern für jede Sprache eine eigene Liste - wie
+   ein Hausaufgabenheft mit einer Seite je Fach.
 
-  const hartOhneEsel = daten.vokabeln.filter(function (v) { return istHartnaeckig(v) && !v.eselsbruecke; });
-  const reifOhneSatz = daten.vokabeln.filter(function (v) {
+   Nichts davon ist ausgedacht. Jede Aufgabe wird abgeleitet: aus dem
+   Karteikasten (was ist heute fällig), aus dem Journal (was macht Ärger) und
+   aus dem Bestand (wo fehlt eine Eselsbrücke, wo ein eigener Satz). Die
+   Schüler können jede Zahl nachrechnen - genau das sollen sie auch.
+
+   Erledigt ist eine Aufgabe, wenn sie erledigt IST, nicht wenn jemand einen
+   Haken setzt. Ein Häkchen, das man selbst setzt, ohne geübt zu haben, wäre
+   eine Lüge, die sich die App selbst erzählt.
+   ------------------------------------------------------------------------ */
+
+/* Erfahrungswert aus dem Journal: so lange dauert eine Abfrage. */
+const SEKUNDEN_JE_ABFRAGE = 9;
+
+function aufgabenFuer(sprache) {
+  const alle = vokabelnDerSprache(sprache);
+  const offen = faellige(sprache);
+  const hartOhneEsel = alle.filter(function (v) { return istHartnaeckig(v) && !v.eselsbruecke; });
+  const reifOhneSatz = alle.filter(function (v) {
     return v.fach >= 3 && !(v.eigeneSaetze && v.eigeneSaetze.length);
   });
-  /* Erfahrungswert: rund neun Sekunden je Abfrage. */
-  const minuten = Math.max(1, Math.round(offen.length * 9 / 60));
+  const heuteGeuebt = daten.journal.filter(function (e) {
+    return e.tag === heute() && e.sprache === sprache && e.art !== "satz";
+  }).length;
 
-  const punkte = [];
-  if (offen.length) {
-    const aufteilung = Object.keys(proSprache).map(function (sp) {
-      return sp.toUpperCase() + " " + proSprache[sp];
-    }).join(" · ");
-    punkte.push({
-      zahl: offen.length,
-      titel: offen.length === 1 ? "fällige Vokabel" : "fällige Vokabeln",
-      text: aufteilung + " – etwa " + minuten + " Minuten. Das ist dein Pflichtteil für heute."
-    });
-  }
+  const aufgaben = [];
+
+  aufgaben.push({
+    erledigt: offen.length === 0,
+    titel: offen.length
+      ? offen.length + (offen.length === 1 ? " fällige Vokabel wiederholen" : " fällige Vokabeln wiederholen")
+      : "Fällige Vokabeln – erledigt",
+    text: offen.length
+      ? "Dein Pflichtteil. Etwa " + Math.max(1, Math.round(offen.length * SEKUNDEN_JE_ABFRAGE / 60)) + " Minuten."
+      : (heuteGeuebt ? heuteGeuebt + " Abfragen heute. Der Kasten ist durch." : "Heute steht in dieser Sprache nichts an."),
+    randzahl: offen.length ? Math.max(1, Math.round(offen.length * SEKUNDEN_JE_ABFRAGE / 60)) + " Min" : ""
+  });
+
   if (hartOhneEsel.length) {
-    punkte.push({
-      zahl: hartOhneEsel.length,
-      titel: hartOhneEsel.length === 1 ? "hartnäckiger Fall" : "hartnäckige Fälle",
-      text: "Ohne Eselsbrücke: " + hartOhneEsel.slice(0, 4).map(function (v) { return "»" + esc(v.fremd) + "«"; }).join(", ") +
-            (hartOhneEsel.length > 4 ? " und weitere" : "") + ". Für die bauen wir zu Hause Merkhilfen."
-    });
-  }
-  if (reifOhneSatz.length) {
-    punkte.push({
-      zahl: reifOhneSatz.length,
-      titel: "Wörter für Beispielsätze",
-      text: "Diese Vokabeln sitzen schon. Schreib Sätze dazu – dann kannst du sie nicht nur übersetzen, sondern benutzen."
+    aufgaben.push({
+      erledigt: false,
+      titel: hartOhneEsel.length + (hartOhneEsel.length === 1 ? " hartnäckiger Fall" : " hartnäckige Fälle") + " ohne Eselsbrücke",
+      text: hartOhneEsel.slice(0, 4).map(function (v) { return "»" + esc(v.fremd) + "«"; }).join(", ") +
+            (hartOhneEsel.length > 4 ? " und weitere" : "") + ". Diese Wörter haben dich schon dreimal erwischt.",
+      randzahl: ""
     });
   }
 
-  el("heute-plan").innerHTML = punkte.length
-    ? punkte.map(function (p) {
-        return '<div class="quote-zeile" style="grid-template-columns:52px 1fr;align-items:start;padding:9px 0;border-top:1px solid var(--linie)">' +
-          '<span class="zahl" style="font-size:1.5rem;font-weight:600;line-height:1.1">' + p.zahl + "</span>" +
-          '<span><strong style="font-size:.9375rem">' + p.titel + "</strong>" +
-          '<div class="hinweis">' + p.text + "</div></span></div>";
-      }).join("")
-    : '<p class="hinweis">Heute steht nichts an. Der Karteikasten hat für dich frei – wenn du trotzdem üben willst, nimm dir unter <strong>Üben</strong> ein Wortfeld vor.</p>';
+  if (reifOhneSatz.length) {
+    aufgaben.push({
+      erledigt: false,
+      titel: reifOhneSatz.length + " Wörter warten auf einen Beispielsatz",
+      text: "Die sitzen schon. Schreib Sätze dazu – dann kannst du sie nicht nur übersetzen, sondern benutzen.",
+      randzahl: ""
+    });
+  }
+
+  if (!alle.length) {
+    return [{
+      erledigt: false,
+      titel: "Noch keine Vokabeln in dieser Sprache",
+      text: "Leg welche an oder übernimm eine Buchseite unter Vokabeln.",
+      randzahl: ""
+    }];
+  }
+  return aufgaben;
+}
+
+function zeichneHeutePlan() {
+  const ziel = el("heute-plan");
+  const jetzt = aktiveSprache();
+
+  ziel.innerHTML = daten.sprachen.map(function (sp) {
+    const aufgaben = aufgabenFuer(sp);
+    const offen = faellige(sp).length;
+    return '<div class="fachblock">' +
+      '<div class="fachkopf">' +
+        '<span class="chip ' + sp + '">' + sp.toUpperCase() + "</span>" +
+        "<h3>" + SPRACHNAMEN[sp] + "</h3>" +
+        '<span style="flex:1"></span>' +
+        (offen
+          ? '<button class="tat klein' + (sp === jetzt ? '' : ' leise') + '" data-ueben="' + sp + '">Üben</button>'
+          : '<span class="mini">fertig</span>') +
+      "</div>" +
+      aufgaben.map(function (a) {
+        return '<div class="aufgabe' + (a.erledigt ? " erledigt" : "") + '">' +
+          '<span class="haken">' + (a.erledigt ? "✓" : "") + "</span>" +
+          '<span><span class="titel">' + a.titel + "</span>" +
+          '<div class="hinweis">' + a.text + "</div></span>" +
+          '<span class="mini">' + a.randzahl + "</span>" +
+        "</div>";
+      }).join("") +
+    "</div>";
+  }).join("");
+
+  /* Aus der Hausaufgabenliste direkt in die Übung springen - und dabei
+     gleich auf die richtige Sprache umschalten. */
+  ziel.querySelectorAll("[data-ueben]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      daten.einstellungen.aktiveSprache = b.dataset.ueben;
+      uebungsart = "faellig";
+      sichere();
+      wechsleAnsicht("ueben");
+    });
+  });
 }
 
 /* ------------------------------ Tagebuch -------------------------------- */
@@ -2420,6 +2727,56 @@ function zeichneEinstellungen() {
   };
   el("aussprache-hinweis").textContent = texte[e.aussprachestufe];
   zeigeStimmenHinweis();
+  zeichneSicherungsstand();
+  zeichneKontenverwaltung();
+}
+
+/* Sprachen nachträglich ändern und das Konto wieder loswerden. */
+function zeichneKontenverwaltung() {
+  const ziel = el("sprachen-verwalten");
+  if (!ziel) return;
+  ziel.innerHTML = Object.keys(SPRACHNAMEN).map(function (sp) {
+    const an = daten.sprachen.indexOf(sp) >= 0;
+    const anzahl = vokabelnDerSprache(sp).length;
+    return '<label class="sprachknopf">' +
+      '<input type="checkbox" value="' + sp + '"' + (an ? " checked" : "") + ">" +
+      '<span class="chip ' + sp + '">' + sp.toUpperCase() + "</span>" +
+      SPRACHNAMEN[sp] +
+      (anzahl ? '<span class="mini">' + anzahl + " Vokabeln</span>" : "") +
+      "</label>";
+  }).join("");
+
+  ziel.querySelectorAll("input").forEach(function (k) {
+    k.addEventListener("change", function () {
+      const gewaehlt = [];
+      ziel.querySelectorAll("input:checked").forEach(function (x) { gewaehlt.push(x.value); });
+      if (!gewaehlt.length) {
+        k.checked = true;
+        el("sprachen-hinweis").textContent = "Mindestens eine Sprache muss bleiben.";
+        return;
+      }
+      /* Eine Sprache abwählen löscht ihre Vokabeln NICHT - sie ruhen nur.
+         Wer sie wieder anhakt, findet seinen Fortschritt vor. */
+      const weg = daten.sprachen.filter(function (s) { return gewaehlt.indexOf(s) < 0; });
+      daten.sprachen = gewaehlt;
+      if (gewaehlt.indexOf(daten.einstellungen.aktiveSprache) < 0) {
+        daten.einstellungen.aktiveSprache = gewaehlt[0];
+      }
+      const konten = ladeKonten().map(function (x) {
+        return x.name === daten.benutzer ? { name: x.name, sprachen: gewaehlt.slice() } : x;
+      });
+      sichereKonten(konten);
+      sichere();
+      fuelleSprachwahl();
+      zeichneSprachleiste();
+      /* Die Liste wird bewusst NICHT neu gezeichnet: Die Vokabelzahlen
+         ändern sich dabei nicht, und wer mit der Tastatur bedient, verlöre
+         sonst mitten im Ankreuzen den Fokus. */
+      el("sprachen-hinweis").textContent = weg.length
+        ? SPRACHNAMEN[weg[0]] + " ruht jetzt. Die Vokabeln bleiben erhalten – hak die Sprache wieder an, und sie sind zurück."
+        : "Sprachen aktualisiert.";
+    });
+  });
 }
 
 el("knopf-name").addEventListener("click", function () {
@@ -2491,9 +2848,157 @@ function sichereDatei(name, inhalt, hinweisFeld) {
   }
 }
 
-el("knopf-export").addEventListener("click", function () {
-  sichereDatei("vokabelkasten-" + kurzname(daten.anzeigename || daten.benutzer) + "-" + heute() + ".json",
-    JSON.stringify(daten, null, 2), el("daten-hinweis"));
+/* =========================================================================
+   SICHERUNG
+
+   Die Lerndaten liegen nur im Browser dieses Geräts. Geht das Gerät
+   verloren, sind sie weg - es gibt keinen Server, der sie aufhebt. Das ist
+   der Preis dafür, dass niemand sonst sie zu sehen bekommt.
+
+   Was eine App ohne Server dagegen tun kann, tut sie hier:
+     * Teilen statt Herunterladen - auf dem Handy geht die Sicherung dann
+       direkt in Mail, Chat oder Cloud, statt in einem Ordner zu verschwinden
+     * sichtbar machen, wann zuletzt gesichert wurde
+     * nach sieben Tagen von sich aus daran erinnern
+     * beim Einlesen fragen, ob ersetzt oder dazugefügt werden soll
+
+   Was sie NICHT kann: von sich aus sichern. Ein Browser darf ohne
+   Fingertipp keine Datei schreiben oder verschicken. Wer das will, braucht
+   einen Server - und damit lägen die Daten von Minderjährigen im Netz.
+   ========================================================================= */
+
+function sicherungsdatei() {
+  return "vokabelkasten-" + kurzname(daten.anzeigename || daten.benutzer) + "-" + heute() + ".json";
+}
+
+function tageSeitSicherung() {
+  if (!daten.letzteSicherung) return null;
+  return Math.floor((Date.now() - new Date(daten.letzteSicherung).getTime()) / 86400000);
+}
+
+function merkeSicherung() {
+  daten.letzteSicherung = new Date().toISOString();
+  sichere();
+  zeichneSicherungsstand();
+}
+
+/* Teilen ist der bessere Weg, wo es ihn gibt: Auf dem Handy landet die
+   Sicherung damit direkt dort, wo sie hingehört. Auf dem Rechner gibt es
+   das meist nicht - dann wird heruntergeladen. */
+function kannTeilen(datei) {
+  return !!(navigator.canShare && navigator.share && navigator.canShare({ files: [datei] }));
+}
+
+function erstelleSicherung() {
+  const hinweis = el("daten-hinweis");
+  const inhalt = JSON.stringify(daten, null, 2);
+  const name = sicherungsdatei();
+
+  let datei = null;
+  try { datei = new File([inhalt], name, { type: "application/json" }); } catch (e) { datei = null; }
+
+  if (datei && kannTeilen(datei)) {
+    navigator.share({ files: [datei], title: "Vokabelkasten-Sicherung" }).then(function () {
+      hinweis.textContent = "Sicherung verschickt. Heb sie irgendwo auf, wo du sie wiederfindest.";
+      merkeSicherung();
+    }).catch(function (fehler) {
+      /* Abbrechen ist keine Panne - nur nichts passiert. */
+      hinweis.textContent = (fehler && fehler.name === "AbortError")
+        ? "Abgebrochen – es wurde nichts gesichert."
+        : "Teilen ging nicht, ich versuche es als Datei.";
+      if (!fehler || fehler.name !== "AbortError") sichereAlsDatei(inhalt, name, hinweis);
+    });
+    return;
+  }
+  sichereAlsDatei(inhalt, name, hinweis);
+}
+
+function sichereAlsDatei(inhalt, name, hinweis) {
+  const vorher = hinweis.textContent;
+  sichereDatei(name, inhalt, hinweis);
+  /* sichereDatei meldet sich selbst; als gesichert gilt es nur, wenn die
+     Meldung sich geändert hat und nicht von einem Abbruch spricht. */
+  setTimeout(function () {
+    if (hinweis.textContent !== vorher && hinweis.textContent.indexOf("abgebrochen") < 0
+        && hinweis.textContent.indexOf("nicht") < 0) {
+      merkeSicherung();
+    }
+  }, 600);
+}
+
+function zeichneSicherungsstand() {
+  const ziel = el("sicherungsstand");
+  if (!ziel) return;
+  const tage = tageSeitSicherung();
+
+  if (tage === null) {
+    ziel.innerHTML = '<div class="sicherungsbalken warnen">' +
+      "<strong>Noch nie gesichert.</strong> Wenn dieses Gerät verlorengeht, ist dein Kasten weg." +
+      "</div>";
+    return;
+  }
+  const text = tage === 0 ? "heute" : (tage === 1 ? "gestern" : "vor " + tage + " Tagen");
+  ziel.innerHTML = '<div class="sicherungsbalken' + (tage >= 7 ? " warnen" : " ruhig") + '">' +
+    "Zuletzt gesichert: <strong>" + text + "</strong>" +
+    (tage >= 7 ? " – das ist eine Weile her." : "") +
+    "</div>";
+}
+
+/* Beim Anmelden einmal nachfragen, wenn lange nichts gesichert wurde. Nicht
+   öfter als einmal je Sitzung - eine Erinnerung, die nervt, wird weggeklickt
+   statt befolgt. */
+let sicherungErinnert = false;
+function erinnereAnSicherung() {
+  if (sicherungErinnert || !daten) return;
+  const tage = tageSeitSicherung();
+  const lohntSich = daten.journal.length >= 20;
+  if (!lohntSich) return;
+  if (tage !== null && tage < 7) return;
+  sicherungErinnert = true;
+
+  const balken = document.createElement("div");
+  balken.className = "erinnerung";
+  balken.innerHTML =
+    "<span>" + (tage === null
+      ? "Du hast deinen Kasten noch nie gesichert."
+      : "Deine letzte Sicherung ist " + tage + " Tage her.") +
+    " Geht dieses Gerät verloren, ist alles weg.</span>" +
+    '<button class="tat klein" id="erinnerung-jetzt">Jetzt sichern</button>' +
+    '<button class="tat leise klein" id="erinnerung-weg">Später</button>';
+  el("a-ueben").insertBefore(balken, el("a-ueben").firstChild);
+
+  el("erinnerung-jetzt").addEventListener("click", function () {
+    balken.remove();
+    wechsleAnsicht("einstellungen");
+    erstelleSicherung();
+  });
+  el("erinnerung-weg").addEventListener("click", function () { balken.remove(); });
+}
+
+el("knopf-sichern").addEventListener("click", erstelleSicherung);
+
+/* Löschen fragt zweimal - beim zweiten Mal steht dabei, was verlorengeht. */
+el("knopf-konto-loeschen").addEventListener("click", function () {
+  const knopf = el("knopf-konto-loeschen");
+  const hinweis = el("loesch-hinweis");
+  if (knopf.dataset.sicher !== "1") {
+    knopf.dataset.sicher = "1";
+    knopf.textContent = "Wirklich löschen?";
+    const tage = tageSeitSicherung();
+    hinweis.textContent = daten.vokabeln.length + " Vokabeln und " + daten.journal.length + " Übungen gehen verloren. " +
+      (tage === null ? "Du hast noch nie gesichert." : tage === 0 ? "Deine Sicherung von heute bleibt erhalten." : "Letzte Sicherung vor " + tage + " Tagen.");
+    setTimeout(function () {
+      if (knopf.dataset.sicher === "1") {
+        knopf.dataset.sicher = "";
+        knopf.textContent = "Konto von diesem Gerät löschen";
+        hinweis.textContent = "";
+      }
+    }, 8000);
+    return;
+  }
+  loescheKonto(daten.benutzer);
+  benutzer = null; daten = null; aktuelleFrage = null;
+  zeigeStart();
 });
 
 function zeigeRohdaten(inhalt) {
@@ -2513,27 +3018,106 @@ function zeigeRohdaten(inhalt) {
 
 el("knopf-import").addEventListener("click", function () { el("datei-import").click(); });
 
+/* Eine Sicherung einzulesen ist der gefährlichste Knopf der ganzen App: Wer
+   hier unbedacht drückt, überschreibt seinen Lernfortschritt. Deshalb wird
+   erst gezeigt, was in der Datei steht, und dann gefragt, was damit
+   geschehen soll. */
 el("datei-import").addEventListener("change", function (ev) {
   const datei = ev.target.files && ev.target.files[0];
   if (!datei) return;
   const leser = new FileReader();
   leser.onload = function () {
+    let eingelesen = null;
     try {
-      const eingelesen = JSON.parse(leser.result);
+      eingelesen = JSON.parse(leser.result);
       if (!Array.isArray(eingelesen.vokabeln)) throw new Error("keine Vokabeln");
-      daten = ruesteNach(eingelesen, daten.benutzer);
-      sichere();
-      fuelleSprachwahl();
-      el("daten-hinweis").textContent = "Eingelesen: " + daten.vokabeln.length + " Vokabeln und " +
-        daten.journal.length + " Journaleinträge für " + daten.benutzer + ".";
-      zeichneKasten();
     } catch (fehler) {
-      el("daten-hinweis").textContent = "Diese Datei konnte ich nicht lesen. Erwartet wird eine Export-Datei des Vokabelkastens.";
+      el("daten-hinweis").textContent = "Diese Datei konnte ich nicht lesen. Erwartet wird eine Sicherung des Vokabelkastens.";
+      return;
     }
+    frageWiederherstellung(eingelesen);
   };
   leser.readAsText(datei);
   ev.target.value = "";
 });
+
+function frageWiederherstellung(eingelesen) {
+  const hinweis = el("daten-hinweis");
+  const neueSprachen = Array.isArray(eingelesen.sprachen) ? eingelesen.sprachen : [];
+  /* Was ist in der Datei neu, was kennen wir schon? */
+  const unbekannt = eingelesen.vokabeln.filter(function (v) {
+    return !daten.vokabeln.some(function (m) {
+      return m.sprache === v.sprache && normalisiere(m.fremd) === normalisiere(v.fremd);
+    });
+  }).length;
+
+  hinweis.innerHTML =
+    '<div class="merkhilfe" style="border-style:solid;font-family:var(--schrift-anzeige)">' +
+      '<div class="kopf">Sicherung gefunden</div>' +
+      "<p>In der Datei stehen <strong>" + eingelesen.vokabeln.length + " Vokabeln</strong> und <strong>" +
+        ((eingelesen.journal || []).length) + " Übungen</strong>" +
+        (eingelesen.anzeigename ? " von " + esc(eingelesen.anzeigename) : "") +
+        (neueSprachen.length ? " (" + neueSprachen.map(function (s) { return SPRACHNAMEN[s] || s; }).join(", ") + ")" : "") + ".</p>" +
+      '<p class="hinweis" style="margin-top:7px">Dein Kasten hier enthält gerade ' + daten.vokabeln.length +
+        " Vokabeln und " + daten.journal.length + " Übungen. " +
+        (unbekannt ? unbekannt + " Vokabeln aus der Datei sind hier noch unbekannt." : "Alle Vokabeln aus der Datei kennst du schon.") + "</p>" +
+      '<div class="reihe" style="margin-top:11px">' +
+        '<button class="tat klein" id="wieder-dazu">Dazufügen</button>' +
+        '<button class="tat leise klein" id="wieder-ersetzen">Alles ersetzen</button>' +
+        '<button class="tat leise klein" id="wieder-weg">Abbrechen</button>' +
+      "</div>" +
+      '<p class="hinweis" style="margin-top:8px"><strong>Dazufügen</strong> holt nur die Vokabeln, die du noch nicht hast – dein Fortschritt bleibt. ' +
+        "<strong>Ersetzen</strong> wirft alles hier weg und nimmt die Datei. Das ist der richtige Weg auf einem neuen Gerät.</p>" +
+    "</div>";
+
+  el("wieder-weg").addEventListener("click", function () {
+    hinweis.textContent = "Abgebrochen – es wurde nichts verändert.";
+  });
+
+  el("wieder-ersetzen").addEventListener("click", function () {
+    daten = ruesteNach(eingelesen, daten.benutzer);
+    /* Das Kontoverzeichnis muss mitziehen, sonst stimmen die Sprachen auf
+       dem Startbildschirm nicht mehr. */
+    const konten = ladeKonten().map(function (k) {
+      return k.name === daten.benutzer ? { name: k.name, sprachen: daten.sprachen.slice() } : k;
+    });
+    sichereKonten(konten);
+    sichere();
+    nachWiederherstellung("Ersetzt: " + daten.vokabeln.length + " Vokabeln und " + daten.journal.length + " Übungen.");
+  });
+
+  el("wieder-dazu").addEventListener("click", function () {
+    let neu = 0;
+    eingelesen.vokabeln.forEach(function (v) {
+      const kennen = daten.vokabeln.some(function (m) {
+        return m.sprache === v.sprache && normalisiere(m.fremd) === normalisiere(v.fremd);
+      });
+      if (kennen) return;
+      /* Fremde Sprachen werden mit aufgenommen - sonst läge die Vokabel im
+         Kasten, ohne je abgefragt zu werden. */
+      if (daten.sprachen.indexOf(v.sprache) < 0 && SPRACHNAMEN[v.sprache]) daten.sprachen.push(v.sprache);
+      daten.vokabeln.push(v);
+      neu++;
+    });
+    const konten = ladeKonten().map(function (k) {
+      return k.name === daten.benutzer ? { name: k.name, sprachen: daten.sprachen.slice() } : k;
+    });
+    sichereKonten(konten);
+    sichere();
+    nachWiederherstellung(neu
+      ? neu + (neu === 1 ? " Vokabel dazugekommen." : " Vokabeln dazugekommen.")
+      : "Nichts dazugekommen – du kanntest schon alles.");
+  });
+}
+
+function nachWiederherstellung(meldung) {
+  ruesteNach(daten, daten.benutzer);
+  fuelleSprachwahl();
+  zeichneSprachleiste();
+  zeichneKasten();
+  zeichneSicherungsstand();
+  el("daten-hinweis").textContent = meldung;
+}
 
 /* ---------------------------- Startvokabeln ----------------------------- */
 el("knopf-demo-weg").addEventListener("click", function () {
