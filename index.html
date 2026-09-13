@@ -262,6 +262,13 @@ label.feld > span { font-size: .75rem; font-weight: 600; color: var(--tinte-2); 
   line-height: 1.2; letter-spacing: -.01em; text-wrap: balance; margin-bottom: 4px;
 }
 .frage-hinweis { font-size: .8125rem; color: var(--tinte-2); margin-bottom: 18px; }
+/* Lautschrift: zurückhaltend, aber lesbar - sie soll das Wort begleiten,
+   nicht mit ihm um Aufmerksamkeit streiten. */
+.lautschrift {
+  font-family: var(--schrift-zahl); font-size: .875rem;
+  color: var(--tinte-3); margin-bottom: 6px; letter-spacing: .01em;
+}
+.loesung .lautschrift { display: inline; font-size: .8125rem; margin: 0; }
 
 .hoerknopf {
   appearance: none; background: var(--karte-2); border: 1px solid var(--linie-2);
@@ -339,9 +346,10 @@ code {
 /* ------------------------ Prüftabelle für Importe ----------------------- */
 .pruefzeile {
   display: grid; grid-template-columns: 26px 1fr 1fr auto; gap: 8px;
-  align-items: center; background: var(--karte); padding: 7px 10px;
+  align-items: start; background: var(--karte); padding: 7px 10px;
   border-top: 1px solid var(--linie);
 }
+.pruefzeile > input[type="checkbox"], .pruefzeile > .warnung { margin-top: 9px; }
 .pruefzeile input[type="text"] { padding: 6px 9px; font-size: .9375rem; }
 .pruefzeile input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--tinte); }
 .pruefzeile.dublette { background: var(--karte-2); }
@@ -512,6 +520,7 @@ code {
             </span>
           </label>
           <label class="feld"><span>Deutsch</span><input type="text" id="neu-deutsch" placeholder="widerwillig, zögernd" autocomplete="off"></label>
+          <label class="feld" style="flex:0 0 130px"><span>Lautschrift</span><input type="text" id="neu-lautschrift" placeholder="rɪˈlʌktənt" autocomplete="off" spellcheck="false"></label>
         </div>
         <div class="reihe">
           <label class="feld"><span>Beispielsatz (freiwillig)</span><input type="text" id="neu-satz" placeholder="He was reluctant to admit his mistake." autocomplete="off"></label>
@@ -540,15 +549,15 @@ code {
 
         <div>
           <h3>Liste einfügen</h3>
-          <p class="hinweis">Eine Zeile je Vokabel: <code>fremd = deutsch</code>. Ein Beispielsatz lässt sich mit <code>|</code> anhängen. Zeilen wie <code>sprache: en</code> gelten für alles, was darunter steht.</p>
+          <p class="hinweis">Eine Zeile je Vokabel: <code>fremd = deutsch</code>. Die Lautschrift kommt in eckige Klammern hinter das Wort, ein Beispielsatz hinter <code>|</code>. Zeilen wie <code>sprache: en</code> gelten für alles, was darunter steht.</p>
         </div>
-        <textarea id="liste-text" rows="6" spellcheck="false" placeholder="sprache: en
-buch: Green Line
-lektion: 3
-wortfeld: Umwelt &amp; Klima
+        <textarea id="liste-text" rows="6" spellcheck="false" placeholder="sprache: fr
+buch: Découvertes
+lektion: 1A
 ---
-sustainable = nachhaltig | A sustainable lifestyle uses fewer resources.
-to tackle = angehen, in Angriff nehmen"></textarea>
+une question [ynkɛstjɔ̃] = eine Frage
+d'accord [dakɔʀ] = einverstanden; o.k.
+un chat = eine Katze | Le chat dort sur le lit."></textarea>
         <div class="reihe">
           <button class="tat" id="knopf-liste-pruefen">Liste prüfen</button>
           <button class="tat leise" id="knopf-liste-datei">Aus Datei laden</button>
@@ -835,6 +844,7 @@ function ruesteNach(d, name) {
   d.vokabeln.forEach(function (v) {
     if (v.buch === undefined) v.buch = BUCH[v.sprache] || "";
     if (v.wortfeld === undefined) v.wortfeld = "";
+    if (v.lautschrift === undefined) v.lautschrift = "";
     if (v.beispielsatz === undefined) v.beispielsatz = "";
     if (v.eselsbruecke === undefined) v.eselsbruecke = "";
     if (!Array.isArray(v.eigeneSaetze)) v.eigeneSaetze = [];
@@ -867,6 +877,7 @@ function neueVokabel(sprache, fremd, deutsch, zusatz) {
     buch: z.buch !== undefined ? z.buch : (BUCH[sprache] || ""),
     lektion: z.lektion || "",
     wortfeld: z.wortfeld || "",
+    lautschrift: z.lautschrift || "",   // [paʀdɔ̃] - steht so in den Schulbüchern
     beispielsatz: z.beispielsatz || "",
     eselsbruecke: z.eselsbruecke || "",
     eigeneSaetze: [],
@@ -1746,6 +1757,10 @@ function zeichneUeben() {
         (nachFremd ? "" : '<button class="hoerknopf" id="knopf-hoeren" title="Wort anhören" aria-label="Wort anhören">♪</button>') +
       "</div>" +
       '<div class="frage-wort">' + esc(f.frage) + "</div>" +
+      /* Beim Weg vom Fremdwort zum Deutschen darf die Lautschrift sofort
+         dabeistehen - sie verrät die Bedeutung nicht, hilft aber beim
+         richtigen Lesen. In der anderen Richtung wäre sie ein Verrat. */
+      ((!nachFremd && v.lautschrift) ? '<div class="lautschrift">[' + esc(v.lautschrift) + "]</div>" : "") +
       '<div class="frage-hinweis">' + (nachFremd ? "Wie heißt das auf " + SPRACHNAMEN[sp] + "?" : "Was heißt das auf Deutsch?") + "</div>" +
       '<input type="text" id="antwort" placeholder="Deine Antwort" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">' +
       '<div class="reihe" style="margin-top:14px">' +
@@ -1985,7 +2000,11 @@ function schliesseAb(korrekt, eingabe, art) {
     '<div class="rueckmeldung ' + (korrekt ? "ja" : "nein") + '">' +
       '<div class="zeile"><span>' + (korrekt ? "✓" : "✗") + "</span><span>" + (korrekt ? "Richtig" : "Falsch") + "</span></div>" +
       (zeigeText
-        ? '<div class="loesung">' + esc(f.loesung) + "</div>"
+        ? '<div class="loesung">' + esc(f.loesung) +
+          /* Jetzt ist die Lautschrift fällig: Wer das Wort gerade gesucht
+             hat, will wissen, wie man es ausspricht. */
+          ((f.richtung === "de-fs" && v.lautschrift) ? ' <span class="lautschrift">[' + esc(v.lautschrift) + "]</span>" : "") +
+          "</div>"
         : '<div class="reihe" style="margin-top:7px">' +
             '<button class="tat leise klein" id="knopf-zeigen">Lösung anzeigen</button>' +
             '<button class="tat leise klein" id="knopf-nochmal">Noch einmal hören</button></div>') +
@@ -2112,12 +2131,13 @@ el("knopf-anlegen").addEventListener("click", function () {
   if (!fremd || !deutsch) { hinweis.textContent = "Bitte beide Felder ausfüllen – Fremdsprache und Deutsch."; return; }
   const sp = el("neu-sprache").value;
   daten.vokabeln.push(neueVokabel(sp, fremd, deutsch, {
+    lautschrift: el("neu-lautschrift").value.trim().replace(/^\[|\]$/g, ""),
     beispielsatz: el("neu-satz").value.trim(),
     wortfeld: el("neu-wortfeld").value.trim(),
     lektion: el("neu-lektion").value.trim()
   }));
   sichere();
-  ["neu-fremd", "neu-deutsch", "neu-satz"].forEach(function (i) { el(i).value = ""; });
+  ["neu-fremd", "neu-deutsch", "neu-lautschrift", "neu-satz"].forEach(function (i) { el(i).value = ""; });
   el("neu-fremd").focus();
   hinweis.textContent = "»" + fremd + "« liegt jetzt in Fach 1.";
   fuelleWortfeldfilter();
@@ -2248,8 +2268,22 @@ function leseListe(text) {
       unverstanden.push({ nr: i + 1, text: zeile });
       return;
     }
+
+    /* Die Lautschrift steht in eckigen Klammern hinter dem Wort - genau so
+       wie in den Vokabellisten der Schulbücher:
+           Attention ! [atɑ̃sjɔ̃] = Achtung; Vorsicht!
+       Damit lässt sich eine Buchseite abschreiben, ohne sie umzusortieren. */
+    let fremd = paar[0].trim();
+    let lautschrift = '';
+    const laut = fremd.match(/^(.*?)\s*\[([^\]]+)\]\s*$/);
+    if (laut && laut[1].trim()) {
+      fremd = laut[1].trim();
+      lautschrift = laut[2].trim();
+    }
+
     eintraege.push({
-      fremd: paar[0].trim(),
+      fremd: fremd,
+      lautschrift: lautschrift,
       deutsch: paar.slice(1).join('=').trim(),
       beispielsatz: (teile.slice(1).join('|') || '').trim(),
       sprache: kopf.sprache,
@@ -2289,7 +2323,9 @@ function zeigeListenvorschau(text) {
     const alt = findeDublette(e.fremd, e.sprache);
     return '<div class="pruefzeile' + (alt ? ' dublette' : '') + '">' +
       '<input type="checkbox" data-nr="' + i + '"' + (alt ? '' : ' checked') + ' aria-label="übernehmen">' +
-      '<input type="text" data-feld="fremd" data-nr="' + i + '" value="' + esc(e.fremd) + '">' +
+      '<span><input type="text" data-feld="fremd" data-nr="' + i + '" value="' + esc(e.fremd) + '">' +
+        (e.lautschrift ? '<span class="lautschrift" style="margin:3px 0 0;display:block">[' + esc(e.lautschrift) + ']</span>' : '') +
+      '</span>' +
       '<input type="text" data-feld="deutsch" data-nr="' + i + '" value="' + esc(e.deutsch) + '">' +
       '<span class="warnung">' + (alt ? 'kenne ich schon' : '') + '</span>' +
     '</div>';
@@ -2348,7 +2384,8 @@ function zeigeListenvorschau(text) {
 
     gewaehlt.forEach(function (e) {
       daten.vokabeln.push(neueVokabel(e.sprache, e.fremd, e.deutsch, {
-        beispielsatz: e.beispielsatz, wortfeld: e.wortfeld, lektion: e.lektion,
+        lautschrift: e.lautschrift, beispielsatz: e.beispielsatz,
+        wortfeld: e.wortfeld, lektion: e.lektion,
         buch: e.buch || BUCH[e.sprache] || ''
       }));
     });
