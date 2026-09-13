@@ -718,7 +718,8 @@ un chat = eine Katze | Le chat dort sur le lit."></textarea>
       </div>
 
       <p class="hinweis" style="text-align:center">
-        Als Nächstes: Aussprachestufe 3, Kalender und E-Mail-Erinnerungen.
+        Als Nächstes: Aussprachestufe 3, Kalender und E-Mail-Erinnerungen.<br>
+        <span class="zahl" id="fassung-anzeige" style="font-size:.688rem;color:var(--tinte-3)"></span>
       </p>
     </section>
   </div>
@@ -3182,12 +3183,74 @@ el("knopf-demo-her").addEventListener("click", function () {
    nicht erlaubt - der Versuch scheitert dort still. */
 if ("serviceWorker" in navigator && location.protocol === "https:") {
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("sw.js").catch(function () { /* hier nicht möglich */ });
+    /* updateViaCache "none": Der Browser soll den Service Worker selbst NIE aus
+       seinem eigenen Zwischenspeicher nehmen, sondern immer frisch laden. Sonst
+       kann eine neue Fassung tagelang nicht ankommen. */
+    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(function (anmeldung) {
+      /* Bei jedem Start nachsehen, ob es eine neue Fassung gibt. */
+      anmeldung.update().catch(function () { /* offline - kein Problem */ });
+
+      anmeldung.addEventListener("updatefound", function () {
+        const neu = anmeldung.installing;
+        if (!neu) return;
+        neu.addEventListener("statechange", function () {
+          /* "installed" bei vorhandenem Controller heißt: Es liegt eine neuere
+             Fassung bereit, die laufende Seite zeigt aber noch die alte. */
+          if (neu.state === "installed" && navigator.serviceWorker.controller) zeigeNeueFassung();
+        });
+      });
+    }).catch(function () { /* im Artifact-Fenster nicht erlaubt - egal */ });
   });
+}
+
+/* Ein Hinweis statt eines stillen Neuladens: Wer gerade mitten in einer Abfrage
+   steckt, soll nicht überrumpelt werden. */
+function zeigeNeueFassung() {
+  if (el("neue-fassung")) return;
+  const balken = document.createElement("div");
+  balken.id = "neue-fassung";
+  balken.className = "erinnerung";
+  balken.innerHTML =
+    "<span>Es gibt eine neuere Fassung des Vokabelkastens.</span>" +
+    '<button class="tat klein" id="fassung-laden">Jetzt laden</button>' +
+    '<button class="tat leise klein" id="fassung-spaeter">Später</button>';
+  const ziel = el("app").hidden ? el("s-start") : el("a-ueben");
+  ziel.insertBefore(balken, ziel.firstChild);
+  el("fassung-laden").addEventListener("click", function () { location.reload(); });
+  el("fassung-spaeter").addEventListener("click", function () { balken.remove(); });
+}
+
+/* --------------------------- Welche Fassung? ----------------------------
+   Ohne sichtbare Fassungsnummer lässt sich nicht klären, ob jemand eine alte
+   Version im Browser hat oder ob ein Fehler wirklich noch besteht. Die Nummer
+   setzt das Bauskript ein; im Artifact-Fenster bleibt der Platzhalter stehen. */
+const FASSUNG_SEITE = "2026-09-13-2349";
+
+function zeigeFassung() {
+  const ziel = el("fassung-anzeige");
+  if (!ziel) return;
+  const seite = FASSUNG_SEITE.indexOf("FASSUNG") >= 0 ? "Arbeitsfassung" : FASSUNG_SEITE;
+  ziel.textContent = "Fassung " + seite;
+
+  /* Der Service Worker kann eine ANDERE Fassung ausliefern als die, die gerade
+     läuft - genau daran erkennt man einen veralteten Zwischenspeicher. */
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    const hoeren = function (ev) {
+      if (ev.data && ev.data.fassung) {
+        navigator.serviceWorker.removeEventListener("message", hoeren);
+        if (ev.data.fassung !== seite) {
+          ziel.textContent = "Fassung " + seite + " · Zwischenspeicher " + ev.data.fassung;
+        }
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", hoeren);
+    try { navigator.serviceWorker.controller.postMessage("fassung?"); } catch (e) { /* egal */ }
+  }
 }
 
 /* -------------------------------- Start --------------------------------- */
 zeigeStart();
+zeigeFassung();
 </script>
 
 </body>
