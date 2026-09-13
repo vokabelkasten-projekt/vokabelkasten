@@ -781,19 +781,36 @@ function loescheKonto(name) {
 function schluessel(name) { return "vt." + kurzname(name) + ".v1"; }
 function kurzname(name) { return String(name).toLowerCase().replace(/[^a-z0-9]+/g, "-"); }
 
-function heute() { return new Date().toISOString().slice(0, 10); }
+/* Ein Datum als JJJJ-MM-TT in ORTSZEIT.
+
+   Hier stand früher toISOString().slice(0,10) - und das rechnet in UTC. In
+   Deutschland ist die Uhr im Sommer zwei Stunden voraus, also lieferte die App
+   zwischen Mitternacht und 2 Uhr noch den VORTAG. Wer um halb eins nachts
+   lernte, bekam die Vokabeln von gestern nochmal und die von heute gar nicht,
+   und der Wochenrückblick zählte seine Übung der falschen Woche zu.
+
+   Aufgefallen ist das erst, als die Uhr während der Arbeit über Mitternacht
+   lief. Ein Fehler, der sich nur zwei Stunden am Tag zeigt, ist besonders
+   heimtückisch - gerade bei Schülern, die spät abends lernen. */
+function alsDatum(d) {
+  return d.getFullYear() + "-" +
+         String(d.getMonth() + 1).padStart(2, "0") + "-" +
+         String(d.getDate()).padStart(2, "0");
+}
+
+function heute() { return alsDatum(new Date()); }
 
 function tagePlus(anzahl, ab) {
   const d = ab ? new Date(ab + "T12:00:00") : new Date();
   d.setDate(d.getDate() + anzahl);
-  return d.toISOString().slice(0, 10);
+  return alsDatum(d);
 }
 
 /* Wochen laufen von Montag bis Sonntag. */
 function wochenStart(datum) {
   const d = new Date((datum || heute()) + "T12:00:00");
   d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-  return d.toISOString().slice(0, 10);
+  return alsDatum(d);
 }
 
 function neueId() { return Math.random().toString(36).slice(2, 10); }
@@ -1766,7 +1783,14 @@ function zeichneUeben() {
       '<input type="text" id="antwort" placeholder="Deine Antwort" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">' +
       '<div class="reihe" style="margin-top:14px">' +
         '<button class="tat" id="knopf-pruefen">Prüfen</button>' +
-        (nachFremd ? '<button class="tat leise" id="knopf-sprechen">🎤 Antwort sprechen</button>' : "") +
+        /* Der Mikrofonknopf gilt in BEIDE Richtungen. Beim Weg in die
+           Fremdsprache prüft er die Aussprache; beim Weg ins Deutsche
+           diktiert er nur - das ist keine Prüfung, sondern Eingabe, und die
+           braucht man genauso. */
+        (Erkenner
+          ? '<button class="tat leise" id="knopf-sprechen">🎤 ' +
+            (nachFremd ? "Antwort sprechen" : "Antwort diktieren") + "</button>"
+          : "") +
         '<button class="tat leise" id="knopf-weissnicht">Weiß ich nicht</button>' +
       "</div>" +
       '<div id="sprech-hinweis" class="hinweis" style="margin-top:8px"></div>' +
@@ -1880,13 +1904,31 @@ function nimmSatzAn(satz, formOk) {
   setTimeout(function () { document.addEventListener("keydown", weiterMitEnter); }, 0);
 }
 
-/* -------------------- Aussprachekontrolle in der Übung ------------------ */
+/* -------------------- Mikrofon in der Übung ------------------------------
+   Zwei verschiedene Dinge hängen an einem Knopf, und sie dürfen nicht
+   verwechselt werden:
+
+     Antwort in der FREMDSPRACHE  -> Aussprachekontrolle. Das Gesagte wird
+                                     bewertet und gilt als Antwort.
+     Antwort auf DEUTSCH          -> Diktat. Das Gesagte landet nur im
+                                     Eingabefeld; abgeschickt wird es erst,
+                                     wenn der Lernende es gelesen und für
+                                     richtig befunden hat.
+
+   Der Unterschied ist wichtig: Eine Spracherkennung verhört sich. Beim
+   Aussprachetraining ist genau das die Information ("so klang es"). Beim
+   Diktieren wäre es eine falsche Note für einen Fehler, den das Mikrofon
+   gemacht hat, nicht der Mensch.
+   ------------------------------------------------------------------------ */
 function starteSprechpruefung() {
   const f = aktuelleFrage;
-  const stufe = daten.einstellungen.aussprachestufe;
   const knopf = el("knopf-sprechen");
   const hinweis = el("sprech-hinweis");
 
+  /* Beim Weg ins Deutsche wird diktiert, nicht geprüft. */
+  if (f.richtung !== "de-fs") { starteDiktat(); return; }
+
+  const stufe = daten.einstellungen.aussprachestufe;
   if (stufe === 3) {
     hinweis.textContent = "Stufe 3 ist vorbereitet, aber noch nicht angeschlossen – sie braucht einen kostenpflichtigen Bewertungsdienst. Bis dahin arbeitet die Kontrolle auf Stufe " +
       (Erkenner ? "1" : "2") + ".";
@@ -1910,7 +1952,8 @@ function starteSprechpruefung() {
     return;
   }
 
-  /* Stufe 1: der Browser hört zu und wir vergleichen den erkannten Text. */
+  /* Stufe 1 der Aussprachekontrolle: der Browser hört zu, wir vergleichen den
+     erkannten Text. */
   knopf.disabled = true;
   knopf.textContent = "🎤 Ich höre …";
   hinweis.textContent = "Sprich das Wort deutlich aus.";
@@ -1927,6 +1970,42 @@ function starteSprechpruefung() {
   }, function (fehlertext) {
     knopf.disabled = false;
     knopf.textContent = "🎤 Antwort sprechen";
+    hinweis.textContent = fehlertext;
+  });
+}
+
+/* Diktat: das Gehörte kommt ins Feld, mehr nicht. Der Mensch liest es, bessert
+   nach, wenn das Mikrofon sich verhört hat, und drückt selbst auf Prüfen. */
+function starteDiktat() {
+  const knopf = el("knopf-sprechen");
+  const hinweis = el("sprech-hinweis");
+  const feld = el("antwort");
+
+  if (!Erkenner) {
+    hinweis.textContent = "Dieser Browser kann nicht zuhören. Auf dem Handy geht es trotzdem: Tippe ins Antwortfeld und nimm das Mikrofon auf der Tastatur.";
+    return;
+  }
+
+  knopf.disabled = true;
+  knopf.textContent = "🎤 Ich höre …";
+  hinweis.textContent = "Sag die deutsche Bedeutung.";
+
+  hoereZu("de", function (treffer) {
+    knopf.disabled = false;
+    knopf.textContent = "🎤 Antwort diktieren";
+    /* Wenn eine der gehörten Fassungen zur Lösung passt, nimm die - das
+       Mikrofon liegt bei Wortendungen oft knapp daneben. Bewertet wird
+       trotzdem nichts: Der Lernende sieht, was dasteht, und entscheidet. */
+    const bestes = treffer.find(function (t) { return pruefe(t, aktuelleFrage.loesung) === "richtig"; })
+                || treffer[0];
+    feld.value = bestes;
+    feld.focus();
+    hinweis.textContent = "Verstanden: »" + bestes + "«" +
+      (treffer.length > 1 ? " (auch gehört: " + treffer.slice(1).join(", ") + ")" : "") +
+      " – bessere nach, wenn nötig, und tippe dann auf Prüfen.";
+  }, function (fehlertext) {
+    knopf.disabled = false;
+    knopf.textContent = "🎤 Antwort diktieren";
     hinweis.textContent = fehlertext;
   });
 }
@@ -2758,9 +2837,9 @@ function zeichneEinstellungen() {
 
   const texte = {
     1: Erkenner
-        ? "Der Browser erkennt dein gesprochenes Wort und vergleicht es mit der Lösung. Er beantwortet damit »war es das richtige Wort?«, nicht »klang es gut?«. Funktioniert offline."
-        : "Dieser Browser kann nicht zuhören – auf iPad und iPhone ist das häufig so. Die Kontrolle weicht automatisch auf Stufe 2 aus.",
-    2: "Deine Aussprache wird aufgenommen. Du hörst dich neben dem Vorbild und kannst die Aufnahme sichern; zu Hause werten wir sie gemeinsam mit einer KI aus. Funktioniert offline, die Auswertung braucht Internet.",
+        ? "Dieser Browser kann zuhören. Er erkennt dein gesprochenes Wort und vergleicht es mit der Lösung – beantwortet also »war es das richtige Wort?«, nicht »klang es gut?«. Die Erkennung läuft meist über das Internet; ohne Netz kann sie ausfallen."
+        : "Dieser Browser kann nicht zuhören. Die Aussprachekontrolle weicht auf Stufe 2 aus. Zum Diktieren nimm das Mikrofon auf der Bildschirmtastatur – das arbeitet unabhängig von der App.",
+    2: "Deine Aussprache wird aufgenommen. Du hörst dich neben dem Vorbild und kannst die Aufnahme sichern; zu Hause werten wir sie gemeinsam mit einer KI aus. Das Aufnehmen geht ohne Netz, die Auswertung braucht Internet.",
     3: "Vorbereitet, aber noch nicht angeschlossen: ein professioneller Bewertungsdienst würde jeden Laut einzeln benoten. Dafür braucht es ein kostenpflichtiges Konto – die Zugangsdaten tragen wir zu Hause ein, nicht in eine App, die im Bus läuft."
   };
   el("aussprache-hinweis").textContent = texte[e.aussprachestufe];
@@ -3224,7 +3303,7 @@ function zeigeNeueFassung() {
    Ohne sichtbare Fassungsnummer lässt sich nicht klären, ob jemand eine alte
    Version im Browser hat oder ob ein Fehler wirklich noch besteht. Die Nummer
    setzt das Bauskript ein; im Artifact-Fenster bleibt der Platzhalter stehen. */
-const FASSUNG_SEITE = "2026-09-13-2349";
+const FASSUNG_SEITE = "2026-09-14-0118";
 
 function zeigeFassung() {
   const ziel = el("fassung-anzeige");

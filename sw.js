@@ -33,7 +33,7 @@
    ========================================================================= */
 
 /* Wird beim Bauen durch den Zeitstempel ersetzt. */
-const FASSUNG = "2026-09-13-2349";
+const FASSUNG = "2026-09-14-0118";
 const SPEICHER = "vokabelkasten-" + FASSUNG;
 
 const DATEIEN = [
